@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import typer
+from click import unstyle
 from typer.testing import CliRunner
 
 CHECKPOINTS = Path(__file__).resolve().parents[1] / "tutorial" / "checkpoints"
@@ -42,7 +43,7 @@ def test_quantity_default_and_flag():
 def test_invalid_quantity_never_prints_a_label(value):
     result = CliRunner().invoke(load_app("05_validation"), ["food", "--quantity", value])
     assert result.exit_code == 2
-    assert "--quantity" in result.output
+    assert "--quantity" in unstyle(result.output)
     assert "Cargo:" not in result.stdout
 
 
@@ -54,9 +55,10 @@ def test_command_group_and_both_help_levels():
     assert "label" in top.stdout and "items" in top.stdout
     detail = runner.invoke(app, ["label", "--help"])
     assert detail.exit_code == 0
+    help_text = unstyle(detail.stdout)
     # Rich can wrap the description inside its help table on narrow terminals.
-    assert "Number of cargo" in detail.stdout and "units." in detail.stdout
-    assert "label food --quantity 2" in detail.stdout
+    assert "Number of cargo" in help_text and "units." in help_text
+    assert "label food --quantity 2" in help_text
     assert runner.invoke(app, ["label", "water", "--quantity", "3"]).stdout == (
         "Cargo: water\nUnits: 3\n"
     )
