@@ -22,11 +22,11 @@ The repository is private initially. Your instructor must give you access before
 
 ## Part 1: your first Typer CLI
 
-Start with a plain Python function in `tutorial/main.py`. We will turn it into a cargo-label command, then add quantity, an uppercase flag, help, validation and a second command. This exercise needs no game server. The [worksheet](docs/tutorial.md) includes short exercises and complete checkpoints if you lose your place. The initial file prints `Cargo: food`; command-line inputs and `--help` will work after the first edit.
+Learn how to design useful commands, then implement those choices with Typer. The follow-along example is a CSV inspection tool in `tutorial/main.py`, independent of the game. Its file-reading function and sample data are supplied. The [worksheet](docs/tutorial.md) connects help, validation, errors, output and configuration to a user's needs, with complete checkpoints if you lose your place. The starting file prints `Rows: 3` and the column names; command-line input and `--help` work after the first edit. Keep the [CLI design guide](docs/cli-design.md) as a reference for your own tools.
 
 ## Part 2: your courier CLI
 
-Your instructor supplies the public HTTPS server URL and workshop join code. Complete registration during setup before the live lesson, so you can follow its last exercise. Use the base URL without `/docs` or `/api`. Register once:
+After the lesson, apply the design principles to a different tool: a courier game CLI. Your instructor supplies the public HTTPS server URL and workshop join code. Register during the break before the build. Use the base URL without `/docs` or `/api`. Register once:
 
 ```sh
 uv run python setup_player.py
@@ -36,7 +36,7 @@ uv run python cli.py status
 
 Setup saves `.player.json` in this checkout. Do not share it or commit it. If a registration response is lost, ask the instructor to recover your token instead of registering a second identity. Your token can also be used in the server's `/docs` page under **Authorize**. Paste only the token, without the word `Bearer`.
 
-Work primarily in `cli.py`. We will read the supplied `status` command and add `map` together; you will then add `contracts`. Continue with [the exercises](docs/exercises.md), [game rules](docs/game-rules.md), and [API guide](docs/api-guide.md). The [CLI patterns](docs/cli-patterns.md) cover confirmations, JSON, typed choices and tests when you need them. Write your usage examples in `USAGE.md`. Additional Python command modules may live in `commands/`. Use the dependencies already provided so everyone can run your CLI consistently.
+Work primarily in `cli.py`. Read the supplied `status` command as an example, then design your command interface before implementing the other actions. Follow [the exercises](docs/exercises.md), [game rules](docs/game-rules.md), and [API guide](docs/api-guide.md). The [game CLI patterns](docs/cli-patterns.md) cover confirmations, JSON, typed choices and tests when you need them. Write your usage examples in `USAGE.md`. Additional Python command modules may live in `commands/`. Use the dependencies already provided so everyone can run your CLI consistently.
 
 ## Your target
 

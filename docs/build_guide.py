@@ -13,8 +13,9 @@ import markdown
 ROOT = Path(__file__).resolve().parents[1]
 PAGES = [
     ("start", "Get started", "README.md"),
+    ("design", "CLI design", "docs/cli-design.md"),
     ("tutorial", "Learn Typer", "docs/tutorial.md"),
-    ("patterns", "CLI patterns", "docs/cli-patterns.md"),
+    ("patterns", "Game CLI patterns", "docs/cli-patterns.md"),
     ("exercises", "Build your CLI", "docs/exercises.md"),
     ("rules", "Game rules", "docs/game-rules.md"),
     ("api", "API guide", "docs/api-guide.md"),
@@ -43,8 +44,8 @@ html{scroll-padding-top:24px}body{margin:0}header{padding:56px max(24px,calc((10
     f'<link rel="stylesheet" href="brand/theme.css"><style>{style}</style>'
     '<a class="skip" href="#start">Skip to the guide</a><header>'
     '<small>Python CLI workshop</small><h1>Build a CLI people can use.</h1>'
-    '<p>Learn Typer, turn the supplied game functions into clear commands, '
-    'and help a new user complete their first delivery.</p>'
+    '<p>Learn CLI design, implement it with Typer using a small CSV tool, '
+    'then apply the same principles in the courier game workshop.</p>'
     f'<nav aria-label="Workshop sections">{nav}</nav></header><main>'
     + "\n".join(sections)
     + '</main><footer>Visual foundations: <a href="../BRANDING.md">SpareBank 1 FFE</a>. '

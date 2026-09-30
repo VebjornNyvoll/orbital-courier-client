@@ -44,7 +44,7 @@ Contract filter values are `all`, `open`, and `completed`. A practice contract l
 }
 ```
 
-The excerpt shows the fields used in the lesson; see the server's `/docs` for the full response. Join a station's `supplies` list with `", ".join(station["supplies"])` when formatting a line for a person.
+The excerpt shows the fields useful for a map command; see the server's `/docs` for the full response. Join a station's `supplies` list with `", ".join(station["supplies"])` when formatting a line for a person.
 
 ## A write example
 

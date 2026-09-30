@@ -1,12 +1,12 @@
 # Build your CLI
 
-## Milestone 1: discovery (20 minutes)
+## Milestone 1: discovery (15 minutes)
 
-Add commands to list stations and open contracts. Give commands short descriptions. Make a contract ID easy to find and inspect. Verify every help page without a running server.
+Sketch the commands a new user will need before writing them. Use the [CLI design guide](cli-design.md) to justify arguments, options and defaults. Then add commands to list stations and open contracts. Give commands short descriptions. Make a contract ID easy to find and inspect. Verify every help page without a running server.
 
 Done when: another person can identify the cargo, quantity, source, and destination for one delivery without reading Python.
 
-## Milestone 2: a complete delivery (30 minutes)
+## Milestone 2: a complete delivery (25 minutes)
 
 Add travel, loading, and delivery commands. Use an argument for the thing being acted on and options for modifiers where that makes sense. Validate quantities before sending the request. Handle `GameError` with stderr and a nonzero exit code.
 
@@ -18,7 +18,7 @@ Add unloading and practice reset. Confirm before reset; optionally accept `--yes
 
 Done when: someone can recover from filling their ship with the wrong item and can cancel a reset safely.
 
-## Milestone 4: usability rehearsal (20 minutes)
+## Milestone 4: usability rehearsal (15 minutes)
 
 Try these without inspecting your code: find help, complete a delivery, correct a typo, handle full cargo, and recover from a server connection failure. Improve the weakest interaction.
 

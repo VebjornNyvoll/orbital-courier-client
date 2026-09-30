@@ -1,6 +1,6 @@
-# CLI patterns to use during the build
+# Game CLI patterns to use during the build
 
-Use these when the basic delivery flow works or when you need a particular feature. They are not extra steps everyone must finish in the first lesson. The [Typer tutorial](https://typer.tiangolo.com/tutorial/) has complete examples.
+These apply the [general CLI design principles](cli-design.md) to the game assignment. Use them when you need a particular feature. The [Typer tutorial](https://typer.tiangolo.com/tutorial/) has more complete examples.
 
 ## Expected failures and exit codes
 
@@ -81,7 +81,7 @@ The path becomes `python cli.py contracts list`. Document both `contracts --help
 
 Read `tests/test_cli.py`: it invokes commands with `CliRunner` and supplies a fake API. Test behaviours users depend on: help works without credentials, bad input makes no request, failures use stderr, cancellation leaves state unchanged, and JSON parses.
 
-The tests in `tests/test_tutorial.py` also check the change from a single command to `label` and `items`. Run them with `uv run pytest -q tests/test_tutorial.py`. [Typer testing](https://typer.tiangolo.com/tutorial/testing/).
+The tests in `tests/test_tutorial.py` check the CSV lesson's output, path validation, configuration precedence and command structure, plus cancellation of the separate safety example. Run them with `uv run pytest -q tests/test_tutorial.py`. [Typer testing](https://typer.tiangolo.com/tutorial/testing/).
 
 ## More to explore after the workshop
 
