@@ -24,7 +24,7 @@ PAGES = [
 sections = []
 for anchor, label, filename in PAGES:
     source = (ROOT / filename).read_text(encoding="utf-8")
-    body = markdown.markdown(source, extensions=["fenced_code", "tables"])
+    body = markdown.markdown(source, extensions=["fenced_code", "tables", "md_in_html"])
     for target, _, other in PAGES:
         for link in (other, Path(other).name):
             body = body.replace(f'href="{link}"', f'href="#{target}"')

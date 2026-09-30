@@ -32,7 +32,7 @@ def app_for(module):
 
 
 @pytest.mark.parametrize("checkpoint", [
-    "01_command", "02_help", "03_validation", "04_errors", "05_json", "06_configuration",
+    "01_command", "02_options", "03_help", "04_validation", "05_errors", "06_json",
 ])
 def test_each_single_command_checkpoint_reads_the_sample(checkpoint):
     result = CliRunner().invoke(app_for(load_module(checkpoint)), [str(DATA)])
@@ -79,7 +79,7 @@ def test_malformed_csv_has_recovery_message_and_failure_exit():
 
 
 def test_explicit_encoding_overrides_environment():
-    app = load_module("07_commands").app
+    app = load_module("08_configuration").app
     env = {"REPORT_ENCODING": "does-not-exist"}
     failure = CliRunner().invoke(app, ["summarize", str(DATA)], env=env)
     assert failure.exit_code == 1

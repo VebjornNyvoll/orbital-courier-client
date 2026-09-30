@@ -124,79 +124,240 @@ uv run python export_submission.py
 <li><a href="https://typer.tiangolo.com/tutorial/package/">Packaging</a>, <a href="https://typer.tiangolo.com/tutorial/options/version/">version options</a> and <a href="https://typer.tiangolo.com/tutorial/options-autocompletion/">completion</a></li>
 <li><a href="https://clig.dev/">Command Line Interface Guidelines</a> for wider design tradeoffs</li>
 </ul></section>
-<section id="tutorial" aria-label="Learn Typer"><h1>Design a good CLI with Typer</h1>
-<p>The lesson uses a small CSV inspection tool. The supplied <code>tutorial/report_data.py</code> already counts records and reads column names. Your job is to design the interface: how someone discovers it, supplies input, reads a result and recovers from a mistake. The tool never changes the input file and needs no server.</p>
-<p>Read the <a href="#design">CLI design guide</a> alongside these steps. Each edit should answer a user need, not simply add another Typer feature.</p>
-<h2>Setup and checkpoints</h2>
-<p>From the client repository root, run <code>cd tutorial</code>. Keep that terminal open and edit <code>main.py</code>. Run <code>uv run python main.py</code>: the starting program prints three rows and the column names from a fixed sample file.</p>
-<p>If you lose your place, copy a checkpoint's <strong>contents into <code>tutorial/main.py</code></strong>. The checkpoints depend on the supplied <code>report_data.py</code> beside that file; do not move the helper. Keep editing <code>main.py</code>, not the checkpoint. <a href="../tutorial/checkpoints/00_start.py">Starting file</a>.</p>
-<p>Examples named <code>csvreport</code> in the slides are sketches of an installed interface. During this lesson, use <code>uv run python main.py</code> instead. No <code>csvreport</code> executable is installed by this repository.</p>
-<h2>1. Let the user choose the input</h2>
-<p>Import Typer, replace <code>print</code> with <code>typer.echo</code>, and replace the fixed call at the bottom with <code>typer.run(summarize)</code>. Pass the function without parentheses. Retain the supplied helper import and both output lines.</p>
+<section id="tutorial" aria-label="Learn Typer"><h1>Making a CLI with Typer</h1>
+<p>We’ll turn a small Python function into a command that someone else can use from a terminal. It reads a CSV file, counts its data rows and shows its column names. The file-reading code is already in <code>tutorial/report_data.py</code>. We’ll work on how the user supplies input, finds help and understands the result.</p>
+<p>You need Python functions and basic type annotations. We’ll explain Typer, <code>Annotated</code> and command decorators as they appear. You don’t need a game account or a running server for this part.</p>
+<p>Each step changes a little code and gives you something to run. Some steps deliberately break the program. Make a prediction before running those commands, then compare it with what actually happens. The answers are below each experiment.</p>
+<h2>Setup</h2>
+<p>From the client repository root:</p>
+<pre><code class="language-sh">uv sync --frozen
+cd tutorial
+uv run python main.py
+</code></pre>
+<p>You should see:</p>
+<pre><code class="language-text">Rows: 3
+Columns: id, title, status
+</code></pre>
+<p><code>uv sync</code> installs the project’s locked dependencies. <code>uv run</code> uses that environment. Keep your terminal in <code>tutorial</code> for the rest of the lesson and edit <code>main.py</code>.</p>
+<p>If you lose your place, copy the <strong>contents</strong> of a checkpoint into <code>tutorial/main.py</code>. Keep the supplied <code>report_data.py</code> alongside it. The checkpoints are recovery points, not files to run from their own directory. <a href="../tutorial/checkpoints/00_start.py">Starting file</a>.</p>
+<h2>1. A Python function becomes a command</h2>
+<p>The starter calls <code>summarize</code> with a fixed path. To accept a path from the terminal, add <code>import typer</code>, change <code>print</code> to <code>typer.echo</code>, and replace the final call with <code>typer.run(summarize)</code>:</p>
+<pre><code class="language-python">from pathlib import Path
+
+import typer
+from report_data import summarize_csv
+
+
+def summarize(source: Path):
+    report = summarize_csv(source)
+    typer.echo(f&quot;Rows: {report['rows']}&quot;)
+    typer.echo(f&quot;Columns: {', '.join(report['columns'])}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    typer.run(summarize)
+</code></pre>
+<p>There are two different function calls here. <code>summarize_csv(source)</code> does the file reading. <code>typer.run(summarize)</code> gives Typer a function to call after it has processed the command line. Notice that <code>summarize</code> has no parentheses in that last line. Calling it yourself would require supplying <code>source</code> yourself too.</p>
+<p>Typer reads <code>source: Path</code> and makes it a required positional argument. It converts the incoming text into a <code>pathlib.Path</code> before calling the function. <code>typer.echo</code> prints the result to the output stream.</p>
 <pre><code class="language-sh">uv run python main.py data/tickets.csv
 uv run python main.py --help
 uv run python main.py
 </code></pre>
-<p>Predict which call reads a file, which describes the command and which reports missing input. <code>source: Path</code> becomes a required argument. A help request must not do the actual work. <a href="../tutorial/checkpoints/01_command.py">Checkpoint 01</a>.</p>
-<p>Before adding options, discuss the proposed interface: why is the source positional, while <code>--encoding utf-8</code> and <code>--json</code> are named? What should happen when those settings are absent?</p>
-<h2>2. Write help someone can act on</h2>
-<p>Use a function docstring to explain the result and show a runnable example. Import <code>Annotated</code> and replace the source parameter with:</p>
+<p><strong>Try it:</strong> Which of these calls reaches the body of <code>summarize</code>? How can help work without a source file? If you’re unsure, temporarily add <code>typer.echo("summarize ran")</code> as the first line in the function, then repeat the commands. Remove that line afterwards.</p>
+<details>
+<summary>Explanation</summary>
+<p>Only the first call reaches the function. Typer produces help without running it. For the last call, it reports the missing argument before the function can run. This matters when your command talks to a service: displaying help should not require the service to be available. Code at module level still runs on import, so keep actual work inside the command function.</p>
+</details>
+<p><a href="../tutorial/checkpoints/01_command.py">Checkpoint 01</a>.</p>
+<h2>2. Arguments, options and defaults</h2>
+<p>Suppose the file uses a different character encoding. A second positional argument could work, but the caller would have to remember what the second value means. A named <code>--encoding</code> option makes the command easier to read and lets us choose a default.</p>
+<p>Change the signature and pass the value to the reader. Keep both output lines:</p>
+<pre><code class="language-python">def summarize(source: Path, encoding: str = &quot;utf-8&quot;):
+    report = summarize_csv(source, encoding=encoding)
+</code></pre>
+<p>For ordinary parameters without explicit Typer metadata, a parameter with no default becomes a required argument, while a parameter with a default becomes an option. Both are parameters in Python. The distinction is how a user supplies them in the terminal.</p>
+<pre><code class="language-sh">uv run python main.py data/tickets.csv
+uv run python main.py data/tickets.csv --encoding utf-8
+uv run python main.py --help
+</code></pre>
+<p>Both reports should be the same. The second call supplies the value explicitly. The first uses the default, which should also appear in help.</p>
+<p><strong>Try it:</strong> Remove <code>= "utf-8"</code> from the signature. Look at help, then try <code>uv run python main.py data/tickets.csv utf-8</code>. Did encoding become a required option, or an argument? Restore the default afterwards.</p>
+<details>
+<summary>Explanation</summary>
+<p>It became a positional argument. Typer inferred that from the absence of a default. Later, <code>typer.Option</code> lets us specify that a parameter is an option explicitly, including when it has no default. “Argument” and “required” are different properties. A required <code>--input</code> option is a valid design too.</p>
+</details>
+<p><a href="../tutorial/checkpoints/02_options.py">Checkpoint 02</a>.</p>
+<h2>3. Help that explains the command</h2>
+<p>The help page knows our parameter names and types. It doesn’t know why anyone would run the program. Add a docstring as the first statement inside <code>summarize</code>:</p>
+<pre><code class="language-python">    &quot;&quot;&quot;Count data rows and show the column names in a CSV file.
+
+    Example: uv run python main.py data/tickets.csv
+    &quot;&quot;&quot;
+</code></pre>
+<p>Run <code>--help</code> again. The docstring now explains the result and gives a first invocation. That is information Typer cannot work out from the type annotations.</p>
+<p>We should also say what belongs in the file. Add <code>from typing import Annotated</code> and replace the two parameters with:</p>
 <pre><code class="language-python">source: Annotated[
-    Path, typer.Argument(help=&quot;CSV file with a header row.&quot;)
+    Path,
+    typer.Argument(help=&quot;CSV file with a header row.&quot;),
+],
+encoding: Annotated[
+    str,
+    typer.Option(help=&quot;Character encoding of the CSV file.&quot;),
+] = &quot;utf-8&quot;,
+</code></pre>
+<p>These lines belong inside <code>def summarize(...)</code>. <code>Annotated</code> combines a type with metadata. <code>Path</code> is still the type of <code>source</code>. <code>typer.Argument(...)</code> adds information that Typer uses when building the command. It does not change the value your function receives.</p>
+<p>For <code>encoding</code>, the default stays outside <code>Annotated</code>. We have made it explicit that this parameter is an option and added its description.</p>
+<p>Look at help once more. Could someone identify the expected file format without reading your code? “Source file” would repeat the name but omit the header requirement.</p>
+<p><a href="../tutorial/checkpoints/03_help.py">Checkpoint 03</a>.</p>
+<h2>4. Validation before the function runs</h2>
+<p><code>Path</code> converts text to a path object. It doesn’t, by itself, require the file to exist. Add these checks to the source parameter:</p>
+<pre><code class="language-python">source: Annotated[
+    Path,
+    typer.Argument(
+        exists=True, dir_okay=False, readable=True,
+        help=&quot;CSV file with a header row.&quot;,
+    ),
 ],
 </code></pre>
-<p>This belongs inside <code>def summarize(...)</code>. Run <code>--help</code> and find the purpose, input description and example. A description such as “source file” would not explain the header requirement. <a href="../tutorial/checkpoints/02_help.py">Checkpoint 02</a>.</p>
-<h2>3. Reject bad paths before doing work</h2>
-<p>Add <code>exists=True, dir_okay=False, readable=True</code> to the <code>typer.Argument(...)</code> declaration. Typer can now reject a missing path or a directory before calling your function.</p>
+<p>Now try a missing path, a directory and a valid file:</p>
 <pre><code class="language-sh">uv run python main.py missing.csv
 uv run python main.py data
 uv run python main.py data/tickets.csv
 </code></pre>
-<p>The first two calls should fail and the third should still work. Explain what a user should do after each error. A valid path does not guarantee valid CSV content; that is the next check. <a href="../tutorial/checkpoints/03_validation.py">Checkpoint 03</a>.</p>
-<h2>4. Make failures useful to people and scripts</h2>
-<p>Import <code>SummaryError</code> from <code>report_data</code>. Put the call to <code>summarize_csv</code> inside a <code>try</code>, catch that expected error, print its message and hint with <code>typer.echo(..., err=True)</code>, and stop with <code>raise typer.Exit(1) from None</code>.</p>
-<p>Keep normal output below the handler. Try <code>uv run python main.py data/broken.csv</code>. The error identifies the malformed record and suggests checking commas and quoting. It should produce no successful result on stdout. Avoid catching every <code>Exception</code>: an unexpected programming bug needs investigation. <a href="../tutorial/checkpoints/04_errors.py">Checkpoint 04</a>.</p>
-<h2>5. Exercise: add JSON output</h2>
-<p>Keep the readable default. Add a Boolean option named <code>--json</code> with help explaining that it prints JSON for scripts. Use the Python name <code>as_json</code> and import <code>json</code>.</p>
+<p>The first two should fail before <code>summarize</code> runs. The third should still print the report. Read the actual error messages: do they identify what you need to correct?</p>
+<p><strong>Try it:</strong> Run <code>uv run python main.py data/broken.csv</code>. The file exists and is readable, but one record has too few fields. Why doesn’t the path declaration handle this failure too?</p>
+<details>
+<summary>Explanation</summary>
+<p>The path checks all pass. Typer calls our function, and <code>summarize_csv</code> then discovers the malformed contents and raises <code>SummaryError</code>. Typer knows about paths, but it cannot infer our CSV rules from that annotation. At this checkpoint, the error reaches the terminal as a traceback. We’ll handle that next.</p>
+</details>
+<p><a href="../tutorial/checkpoints/04_validation.py">Checkpoint 04</a>. For other input types, Typer supports <a href="https://typer.tiangolo.com/tutorial/parameter-types/number/">numeric bounds</a> and <a href="https://typer.tiangolo.com/tutorial/parameter-types/enum/">choices through Enum</a>.</p>
+<h2>5. Expected failures, error output and exit codes</h2>
+<p>Change the helper import to <code>from report_data import SummaryError, summarize_csv</code>. Replace the call to <code>summarize_csv</code> with:</p>
+<pre><code class="language-python">    try:
+        report = summarize_csv(source, encoding=encoding)
+    except SummaryError as exc:
+        typer.echo(f&quot;Error: {exc.message}\n{exc.hint}&quot;, err=True)
+        raise typer.Exit(1) from None
+</code></pre>
+<p>Keep the normal output below this block. Run the malformed-file command again. Instead of the traceback, you should see a message identifying the record and suggesting that you check its commas and quoting.</p>
+<p>The handler catches a known failure from the reader. Catching every <code>Exception</code> would also catch programming bugs, which need investigation rather than a misleading explanation about the input.</p>
+<p>There are two separate parts to reporting failure:</p>
+<ul>
+<li><code>err=True</code> writes to <strong>stderr</strong>, the stream for errors and diagnostic messages. Normal results go to <strong>stdout</strong>.</li>
+<li><code>raise typer.Exit(1)</code> stops execution with a nonzero <strong>exit code</strong>. Another program can check that code without understanding the error text.</li>
+</ul>
+<p>Printing an error and returning normally would still report success to the calling process. Returning the integer <code>1</code> from the Python function does not set the process exit code either.</p>
+<p>In Bash, check immediately after the failing command:</p>
+<pre><code class="language-sh">uv run python main.py data/broken.csv
+echo $?
+</code></pre>
+<p>PowerShell uses <code>$LASTEXITCODE</code>. You should get <code>1</code>. Try the valid sample to get <code>0</code>, and a missing source argument to see Typer’s <code>2</code>. The general convention is zero for success and nonzero for failure. The meanings of particular nonzero codes depend on the tool.</p>
+<p><a href="../tutorial/checkpoints/05_errors.py">Checkpoint 05</a>.</p>
+<h2>6. Exercise: JSON output</h2>
+<p>The report is readable, but another program would need to pull the number out of <code>Rows: 3</code>. Add a <code>--json</code> flag so a caller can ask for structured output. Keep the readable output as the default.</p>
+<p>Add <code>import json</code>. Use the Python parameter name <code>as_json</code> so you don’t hide the imported module. This declaration gives it the CLI name <code>--json</code>:</p>
 <pre><code class="language-python">as_json: Annotated[
-    bool, typer.Option(&quot;--json&quot;, help=&quot;Print JSON for scripts.&quot;)
+    bool, typer.Option(&quot;--json&quot;, help=&quot;Print JSON for scripts.&quot;),
 ] = False,
 </code></pre>
-<p>Print <code>json.dumps(report)</code> when it is set and avoid falling through to the readable output. A flag does not take the word <code>True</code> after it.</p>
+<p>Put it after the required source parameter. A Boolean flag does not need a value: <code>--json</code> means true. You don’t write <code>--json True</code>.</p>
+<p>Write the output branch yourself, then check:</p>
 <pre><code class="language-sh">uv run python main.py data/tickets.csv
 uv run python main.py data/tickets.csv --json
+uv run python main.py --help
 </code></pre>
-<p>Check both forms and the help page. The entire stdout of the second call must parse as JSON. There must be no banner, progress message or “Done!” mixed into it. Compare with <a href="../tutorial/checkpoints/05_json.py">checkpoint 05</a> after your attempt.</p>
-<p>Check exit status immediately after each command: <code>$LASTEXITCODE</code> in PowerShell, or <code>echo $?</code> in Bash/zsh. For this tool a successful result exits 0, invalid CLI input exits 2, and a file-processing failure exits 1. Other tools may choose different nonzero codes.</p>
-<h2>6. Keep configuration predictable</h2>
-<p>Add an <code>encoding</code> string option with default <code>"utf-8"</code>, help text and <code>envvar="REPORT_ENCODING"</code>. Pass <code>encoding=encoding</code> to the helper. The rule is explicit option, then environment variable, then default. <a href="../tutorial/checkpoints/06_configuration.py">Checkpoint 06</a>.</p>
-<p>In PowerShell:</p>
-<pre><code class="language-powershell">$env:REPORT_ENCODING = &quot;does-not-exist&quot;
-uv run python main.py data/tickets.csv
-uv run python main.py data/tickets.csv --encoding utf-8
-Remove-Item Env:REPORT_ENCODING
+<p>The entire stdout of the second command should be a JSON document. The existing error handler should still work in either mode.</p>
+<details>
+<summary>One solution</summary>
+<p>After reading the report and handling errors, replace the two output statements with:</p>
+<pre><code class="language-python">    if as_json:
+        typer.echo(json.dumps(report))
+        return
+    typer.echo(f&quot;Rows: {report['rows']}&quot;)
+    typer.echo(f&quot;Columns: {', '.join(report['columns'])}&quot;)
 </code></pre>
-<p>In Bash/zsh:</p>
-<pre><code class="language-sh">export REPORT_ENCODING=does-not-exist
-uv run python main.py data/tickets.csv
-uv run python main.py data/tickets.csv --encoding utf-8
-unset REPORT_ENCODING
+<p>Without the <code>return</code>, execution would print the readable lines after the JSON. That is no longer a valid JSON document. An <code>if</code>/<code>else</code> would work too.</p>
+</details>
+<p><strong>Try it:</strong> Temporarily remove that <code>return</code> and run this in your VM:</p>
+<pre><code class="language-sh">uv run python main.py data/tickets.csv --json | python -m json.tool
 </code></pre>
-<p>The first call should fail; the explicit option should succeed. Clean up the variable afterwards. Help should show both the environment variable and default. Typer does not automatically supply a configuration-file format or precedence policy.</p>
-<h2>7. Add commands when there are distinct tasks</h2>
-<p>Create <code>app = typer.Typer(no_args_is_help=True)</code>. Put <code>@app.command()</code> above the existing summarize function. Add the columns function from <a href="../tutorial/checkpoints/07_commands.py">checkpoint 07</a>, which prints one name per line and keeps the same path, encoding and error behaviour. Replace <code>typer.run(summarize)</code> with <code>app()</code>.</p>
+<p>The pipe sends our stdout to another program. Python’s JSON parser should reject the extra text. Restore <code>return</code> and try again. This is why progress messages and banners must not share the result stream.</p>
+<p><a href="../tutorial/checkpoints/06_json.py">Checkpoint 06</a>.</p>
+<h2>7. Two commands in one tool</h2>
+<p>Suppose someone wants a list of column names with no report labels. We could add another mode flag, but <code>columns</code> is a distinct task. Giving it a command name makes it visible in top-level help.</p>
+<p>Add <code>app = typer.Typer(no_args_is_help=True)</code> below the imports. Put <code>@app.command()</code> directly above your existing <code>def summarize(...)</code>. Keep its entire signature and body. Replace <code>typer.run(summarize)</code> at the bottom with <code>app()</code>.</p>
+<p>The app holds the command registrations. The decorator tells it about the function. With two commands registered, Typer uses the first word after <code>main.py</code> to choose which one to call. A single decorated command normally stays flat, so finish adding the second function before testing the new command names.</p>
+<p>Add this function above the final <code>if __name__ == "__main__":</code> block:</p>
+<pre><code class="language-python">@app.command()
+def columns(
+    source: Annotated[
+        Path,
+        typer.Argument(
+            exists=True, dir_okay=False, readable=True,
+            help=&quot;CSV file with a header row.&quot;,
+        ),
+    ],
+    encoding: Annotated[
+        str, typer.Option(help=&quot;Character encoding of the CSV file.&quot;),
+    ] = &quot;utf-8&quot;,
+):
+    &quot;&quot;&quot;Print one column name per line.&quot;&quot;&quot;
+    try:
+        report = summarize_csv(source, encoding=encoding)
+    except SummaryError as exc:
+        typer.echo(f&quot;Error: {exc.message}\n{exc.hint}&quot;, err=True)
+        raise typer.Exit(1) from None
+    for name in report[&quot;columns&quot;]:
+        typer.echo(name)
+</code></pre>
+<p>The parameters and error handling deliberately match <code>summarize</code>. The output is the difference. Once you understand the two commands, you could extract their common code into a helper.</p>
+<p>Update the example in <code>summarize</code>’s docstring to include its new command name. Then run:</p>
 <pre><code class="language-sh">uv run python main.py --help
 uv run python main.py summarize --help
 uv run python main.py summarize data/tickets.csv --json
 uv run python main.py columns data/tickets.csv
 </code></pre>
-<p>The command name is now required before the source. The old flat invocation no longer works. This is an interface change that would need care if others already used the tool. Nested command groups are optional; two tasks do not need a deep hierarchy.</p>
-<h2>8. Verify the interface</h2>
-<p>Return to the repository root with <code>cd ..</code>, then run <code>uv run pytest -q tests/test_tutorial.py</code>. Inspect tests for readable output, clean JSON, help without file access, invalid paths, useful errors and configuration precedence.</p>
-<p>The lesson also discusses safe writes, prompts, progress, cancellation, installation and compatibility. These are design topics beyond the read-only CSV tool. <code>tutorial/safety_example.py</code> provides a confirmation guard, tested to stop before a write when confirmation is declined or unavailable. It is a reference, not a request to add file writes to this tool.</p>
-<h2>Apply the principles</h2>
-<p>Give someone a task and your help text. Let them try without a verbal walkthrough. Note where they hesitate and improve that interaction.</p>
-<p>Then open <a href="#exercises">the courier exercise</a>. The game is a separate application of the same design decisions. The <a href="#patterns">game CLI patterns</a> are available when you need confirmations, choices, JSON or groups during that build.</p></section>
+<p><strong>Try it:</strong> Run the old invocation, <code>uv run python main.py data/tickets.csv</code>. Why does it fail now? Where does a new user find the correct invocation?</p>
+<details>
+<summary>Explanation</summary>
+<p>Typer now expects a command name first, so it interprets the path as an unknown command. The top-level help lists the operations. Per-command help explains their inputs. This is an interface change. For a tool that others already use, consider compatibility and update examples before releasing it.</p>
+</details>
+<p><a href="../tutorial/checkpoints/07_commands.py">Checkpoint 07</a>.</p>
+<h2>8. Configuration and tests</h2>
+<p>If users repeatedly choose an encoding, an environment variable can save typing. Add <code>envvar="REPORT_ENCODING"</code> to <code>typer.Option(...)</code> for encoding in <strong>both</strong> commands. The order is explicit option, then environment variable, then the Python default.</p>
+<p>In Bash:</p>
+<pre><code class="language-sh">export REPORT_ENCODING=does-not-exist
+uv run python main.py summarize data/tickets.csv
+uv run python main.py summarize data/tickets.csv --encoding utf-8
+unset REPORT_ENCODING
+</code></pre>
+<p>In PowerShell:</p>
+<pre><code class="language-powershell">$env:REPORT_ENCODING = &quot;does-not-exist&quot;
+uv run python main.py summarize data/tickets.csv
+uv run python main.py summarize data/tickets.csv --encoding utf-8
+Remove-Item Env:REPORT_ENCODING
+</code></pre>
+<p>The first call fails because the encoding is unknown. The explicit option overrides it and succeeds. Clear the environment variable afterwards and check how help documents it. Typer does not automatically read configuration files. You would have to define that format and where it fits in the precedence order.</p>
+<p><a href="../tutorial/checkpoints/08_configuration.py">Checkpoint 08</a>.</p>
+<p>We have tried many commands manually. <code>CliRunner</code> can automate those checks:</p>
+<pre><code class="language-python">import json
+from typer.testing import CliRunner
+from main import app
+
+result = CliRunner().invoke(app, [
+    &quot;summarize&quot;, &quot;data/tickets.csv&quot;, &quot;--json&quot;,
+])
+assert result.exit_code == 0
+assert json.loads(result.stdout)[&quot;rows&quot;] == 3
+assert result.stderr == &quot;&quot;
+</code></pre>
+<p>That example assumes the working directory is <code>tutorial</code>. Tests in the repository resolve their sample paths explicitly so they also run from the root. Use <code>cd ..</code>, then <code>uv run pytest -q tests/test_tutorial.py</code> to run them. Look for tests of failures and help, not just successful output. Calling the underlying Python function directly would skip Typer’s argument handling.</p>
+<h2>Before sharing your own tool</h2>
+<p>The CSV tool does not change files. For tools that write or delete things, decide how to preserve existing work, when to confirm an action and how to behave in a script with no one available to answer a prompt. <code>tutorial/safety_example.py</code> shows a confirmation guard. Its tests verify that a refusal stops before a write.</p>
+<p>For longer operations, show progress on stderr, set network timeouts and make cancellation work. Installation and a first successful invocation belong in your README. A version command helps when someone reports a problem. <a href="https://typer.tiangolo.com/tutorial/package/">Typer’s packaging guide</a> explains how an installable package can expose a short command name.</p>
+<p>Use the <a href="#design">CLI design guide</a> as a reference. Then open <a href="#exercises">the game exercise</a> and apply these ideas to a different program. The point of that exercise is to make the interface decisions yourself.</p>
+<h2>Sources</h2>
+<p>The lesson’s small edits, explicit explanations and deliberate-break experiments take inspiration from <a href="https://github.com/imre-kerr-sb1/fastapi-workshop/tree/main/docs">Imre Kerr’s FastAPI workshop</a>. The examples here are specific to Typer. For the library behaviour, see the <a href="https://typer.tiangolo.com/tutorial/">Typer tutorial</a>. The <a href="https://clig.dev/">Command Line Interface Guidelines</a> cover the wider design decisions.</p></section>
 <section id="patterns" aria-label="Game CLI patterns"><h1>Game CLI patterns to use during the build</h1>
 <p>These apply the <a href="#design">general CLI design principles</a> to the game assignment. Use them when you need a particular feature. The <a href="https://typer.tiangolo.com/tutorial/">Typer tutorial</a> has more complete examples.</p>
 <h2>Expected failures and exit codes</h2>

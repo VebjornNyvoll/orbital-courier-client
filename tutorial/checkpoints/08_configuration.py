@@ -12,7 +12,7 @@ app = typer.Typer(no_args_is_help=True)
 @app.command()
 def summarize(
     source: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True, help="CSV file with a header row.")],
-    encoding: Annotated[str, typer.Option(help="Character encoding of the CSV file.")] = "utf-8",
+    encoding: Annotated[str, typer.Option(envvar="REPORT_ENCODING", help="Character encoding of the CSV file.")] = "utf-8",
     as_json: Annotated[bool, typer.Option("--json", help="Print JSON for scripts.")] = False,
 ):
     """Count data rows and show the column names in a CSV file.
@@ -34,7 +34,7 @@ def summarize(
 @app.command()
 def columns(
     source: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True, help="CSV file with a header row.")],
-    encoding: Annotated[str, typer.Option(help="Character encoding of the CSV file.")] = "utf-8",
+    encoding: Annotated[str, typer.Option(envvar="REPORT_ENCODING", help="Character encoding of the CSV file.")] = "utf-8",
 ):
     """Print one column name per line."""
     try:
