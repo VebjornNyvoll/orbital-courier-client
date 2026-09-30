@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PAGES = [
     ("start", "Get started", "README.md"),
     ("tutorial", "Learn Typer", "docs/tutorial.md"),
+    ("patterns", "CLI patterns", "docs/cli-patterns.md"),
     ("exercises", "Build your CLI", "docs/exercises.md"),
     ("rules", "Game rules", "docs/game-rules.md"),
     ("api", "API guide", "docs/api-guide.md"),

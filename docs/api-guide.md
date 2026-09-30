@@ -30,6 +30,22 @@ Contract filter values are `all`, `open`, and `completed`. A practice contract l
 {"id":"P01","item":"food","source":"earth","destination":"luna","quantity":2,"reward":10,"completed":false}
 ```
 
+`game.list_contracts(status="open")` puts those objects in `data["contracts"]`. Loop over that list, not the outer dictionary.
+
+`game.map()` has a similar structure: `data["stations"]` is a list of station dictionaries. The first two entries look like this (the full response also includes Mars, Europa and Titan):
+
+```json
+{
+  "stations": [
+    {"id": "earth", "name": "Earth", "supplies": ["food", "water"]},
+    {"id": "luna", "name": "Luna", "supplies": ["tools"]}
+  ],
+  "travel_rule": "Any station is reachable directly. Travel is free."
+}
+```
+
+The excerpt shows the fields used in the lesson; see the server's `/docs` for the full response. Join a station's `supplies` list with `", ".join(station["supplies"])` when formatting a line for a person.
+
 ## A write example
 
 ```python

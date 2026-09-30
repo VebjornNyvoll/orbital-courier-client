@@ -14,8 +14,7 @@ If using a workshop cloud VM, run these commands in that VM's terminal and edit 
 git clone https://github.com/VebjornNyvoll/orbital-courier-client.git
 cd orbital-courier-client
 uv sync --frozen
-uv run python tutorial/main.py Alex
-uv run python tutorial/main.py --help
+uv run python tutorial/main.py
 uv run pytest -q
 ```
 
@@ -23,11 +22,11 @@ The repository is private initially. Your instructor must give you access before
 
 ## Part 1: your first Typer CLI
 
-Edit `tutorial/main.py` as the instructor explains arguments, options, help, validation, and commands. This exercise needs no game server. [Follow-along checkpoints](docs/tutorial.md) tell you what to try after each step.
+Start with a plain Python function in `tutorial/main.py`. We will turn it into a cargo-label command, then add quantity, an uppercase flag, help, validation and a second command. This exercise needs no game server. The [worksheet](docs/tutorial.md) includes short exercises and complete checkpoints if you lose your place. The initial file prints `Cargo: food`; command-line inputs and `--help` will work after the first edit.
 
 ## Part 2: your courier CLI
 
-Your instructor supplies the public HTTPS server URL and workshop join code. Use the base URL without `/docs` or `/api`. Register once:
+Your instructor supplies the public HTTPS server URL and workshop join code. Complete registration during setup before the live lesson, so you can follow its last exercise. Use the base URL without `/docs` or `/api`. Register once:
 
 ```sh
 uv run python setup_player.py
@@ -37,7 +36,7 @@ uv run python cli.py status
 
 Setup saves `.player.json` in this checkout. Do not share it or commit it. If a registration response is lost, ask the instructor to recover your token instead of registering a second identity. Your token can also be used in the server's `/docs` page under **Authorize**. Paste only the token, without the word `Bearer`.
 
-Work primarily in `cli.py`. See [the exercises](docs/exercises.md), [game rules](docs/game-rules.md), and [API guide](docs/api-guide.md). Write your usage examples in `USAGE.md`. Additional Python command modules may live in `commands/`. Use the dependencies already provided so everyone can run your CLI consistently.
+Work primarily in `cli.py`. We will read the supplied `status` command and add `map` together; you will then add `contracts`. Continue with [the exercises](docs/exercises.md), [game rules](docs/game-rules.md), and [API guide](docs/api-guide.md). The [CLI patterns](docs/cli-patterns.md) cover confirmations, JSON, typed choices and tests when you need them. Write your usage examples in `USAGE.md`. Additional Python command modules may live in `commands/`. Use the dependencies already provided so everyone can run your CLI consistently.
 
 ## Your target
 

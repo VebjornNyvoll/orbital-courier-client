@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbital Courier · Workshop guide</title><link rel="stylesheet" href="brand/theme.css"><style>
 html{scroll-padding-top:24px}body{margin:0}header{padding:56px max(24px,calc((100vw - 1120px)/2));background:var(--ffe-color-surface-secondary-default)}header p{max-width:720px;font-size:1.25rem}header h1{font-size:clamp(2.5rem,5vw,4rem);margin:16px 0}header small{font-family:'SpareBank1 Medium',sans-serif}nav{display:flex;gap:16px 24px;flex-wrap:wrap;margin-top:32px}main{max-width:1120px;margin:auto;padding:32px 24px 64px}section{max-width:900px;margin:0 auto 48px;padding:32px;background:var(--ffe-color-background-default);border:1px solid var(--ffe-color-border-primary-subtle);border-radius:16px}section h1{font-size:2rem}h2{font-size:1.6rem;margin-top:40px}h3{font-size:1.2rem}p,li{font-size:1.1rem}li{margin:8px 0}pre{overflow-x:auto;white-space:pre;font-size:1rem}table{width:100%;border-collapse:collapse;display:block;overflow:auto}td,th{text-align:left;padding:12px;border-bottom:1px solid var(--ffe-color-border-primary-subtle)}footer{max-width:900px;margin:0 auto;padding:0 24px 40px}.skip{position:absolute;left:16px;top:-100px}.skip:focus{top:12px;background:white;padding:12px}@media(max-width:600px){section{padding:20px}main{padding:24px 12px}pre{padding:16px}}
-</style><a class="skip" href="#start">Skip to the guide</a><header><small>Python CLI workshop</small><h1>Build a CLI people can use.</h1><p>Learn Typer, turn the supplied game functions into clear commands, and help a new user complete their first delivery.</p><nav aria-label="Workshop sections"><a href="#start">Get started</a><a href="#tutorial">Learn Typer</a><a href="#exercises">Build your CLI</a><a href="#rules">Game rules</a><a href="#api">API guide</a><a href="#usage">Your usage guide</a></nav></header><main><section id="start" aria-label="Get started"><h1>Orbital Courier: build a great Python CLI</h1>
+</style><a class="skip" href="#start">Skip to the guide</a><header><small>Python CLI workshop</small><h1>Build a CLI people can use.</h1><p>Learn Typer, turn the supplied game functions into clear commands, and help a new user complete their first delivery.</p><nav aria-label="Workshop sections"><a href="#start">Get started</a><a href="#tutorial">Learn Typer</a><a href="#patterns">CLI patterns</a><a href="#exercises">Build your CLI</a><a href="#rules">Game rules</a><a href="#api">API guide</a><a href="#usage">Your usage guide</a></nav></header><main><section id="start" aria-label="Get started"><h1>Orbital Courier: build a great Python CLI</h1>
 <p>Open <a href="#start">the styled workshop guide</a> in a browser after cloning. It includes setup, the Typer tutorial, exercises and API guidance, and works offline.</p>
 <p>A hands-on Typer workshop for people who already write Python. You will design a CLI for a small delivery game. The supplied <code>game_api.py</code> handles HTTP, configuration, and network failures.</p>
 <h2>Before the workshop</h2>
@@ -9,21 +9,20 @@ html{scroll-padding-top:24px}body{margin:0}header{padding:56px max(24px,calc((10
 <pre><code class="language-sh">git clone https://github.com/VebjornNyvoll/orbital-courier-client.git
 cd orbital-courier-client
 uv sync --frozen
-uv run python tutorial/main.py Alex
-uv run python tutorial/main.py --help
+uv run python tutorial/main.py
 uv run pytest -q
 </code></pre>
 <p>The repository is private initially. Your instructor must give you access before cloning, or provide a ZIP. For a ZIP, extract it and start at <code>uv sync --frozen</code>.</p>
 <h2>Part 1: your first Typer CLI</h2>
-<p>Edit <code>tutorial/main.py</code> as the instructor explains arguments, options, help, validation, and commands. This exercise needs no game server. <a href="#tutorial">Follow-along checkpoints</a> tell you what to try after each step.</p>
+<p>Start with a plain Python function in <code>tutorial/main.py</code>. We will turn it into a cargo-label command, then add quantity, an uppercase flag, help, validation and a second command. This exercise needs no game server. The <a href="#tutorial">worksheet</a> includes short exercises and complete checkpoints if you lose your place. The initial file prints <code>Cargo: food</code>; command-line inputs and <code>--help</code> will work after the first edit.</p>
 <h2>Part 2: your courier CLI</h2>
-<p>Your instructor supplies the public HTTPS server URL and workshop join code. Use the base URL without <code>/docs</code> or <code>/api</code>. Register once:</p>
+<p>Your instructor supplies the public HTTPS server URL and workshop join code. Complete registration during setup before the live lesson, so you can follow its last exercise. Use the base URL without <code>/docs</code> or <code>/api</code>. Register once:</p>
 <pre><code class="language-sh">uv run python setup_player.py
 uv run python cli.py --help
 uv run python cli.py status
 </code></pre>
 <p>Setup saves <code>.player.json</code> in this checkout. Do not share it or commit it. If a registration response is lost, ask the instructor to recover your token instead of registering a second identity. Your token can also be used in the server's <code>/docs</code> page under <strong>Authorize</strong>. Paste only the token, without the word <code>Bearer</code>.</p>
-<p>Work primarily in <code>cli.py</code>. See <a href="#exercises">the exercises</a>, <a href="#rules">game rules</a>, and <a href="#api">API guide</a>. Write your usage examples in <code>USAGE.md</code>. Additional Python command modules may live in <code>commands/</code>. Use the dependencies already provided so everyone can run your CLI consistently.</p>
+<p>Work primarily in <code>cli.py</code>. We will read the supplied <code>status</code> command and add <code>map</code> together; you will then add <code>contracts</code>. Continue with <a href="#exercises">the exercises</a>, <a href="#rules">game rules</a>, and <a href="#api">API guide</a>. The <a href="#patterns">CLI patterns</a> cover confirmations, JSON, typed choices and tests when you need them. Write your usage examples in <code>USAGE.md</code>. Additional Python command modules may live in <code>commands/</code>. Use the dependencies already provided so everyone can run your CLI consistently.</p>
 <h2>Your target</h2>
 <p>Someone should be able to find a contract, inspect its requirements, load cargo, and make a delivery using only your help text and usage guide. They should also understand how to recover from a mistake.</p>
 <p>Useful checks:</p>
@@ -45,24 +44,143 @@ uv run python export_submission.py
 </ul>
 <h2>Further reading</h2>
 <p><a href="https://clig.dev/">CLI Guidelines</a> · <a href="https://typer.tiangolo.com/tutorial/">Typer tutorial</a> · <a href="https://typer.tiangolo.com/tutorial/testing/">Typer testing</a></p></section>
-<section id="tutorial" aria-label="Learn Typer"><h1>Part 1 follow-along checkpoints</h1>
-<p>Start in <code>tutorial/main.py</code>. The instructor's examples use this file until the game exercise begins.</p>
-<ol>
-<li><strong>Function to command.</strong> Run <code>uv run python tutorial/main.py Alex</code>, then <code>--help</code>. A required <code>str</code> becomes a positional argument.</li>
-<li><strong>Named options.</strong> Add <code>formal: bool = False</code>. Try <code>Alex --formal</code>. Explain that a Python default normally creates a CLI option.</li>
-<li><strong>Help with Annotated.</strong> Import <code>Annotated</code> from <code>typing</code>. Write <code>name: Annotated[str, typer.Argument(help="Courier name.")]</code>. Add an explicit option with help.</li>
-<li><strong>Validation.</strong> Add <code>count: Annotated[int, typer.Option(min=1, max=5, help="Number of greetings.")] = 1</code>. Try <code>--count 0</code> and <code>--count banana</code>.</li>
-<li><strong>Several commands.</strong> Replace <code>typer.run(hello)</code> with <code>app = typer.Typer(...)</code>, decorate functions with <code>@app.command()</code>, and call <code>app()</code>. Add a callback so even one registered command keeps its explicit command name.</li>
-<li><strong>Command groups.</strong> Discuss <code>add_typer</code> and <code>contracts list</code>. Keep this optional if the group needs more practice with single commands.</li>
-<li><strong>Failures.</strong> Raise <code>typer.Exit(1)</code> after printing an expected failure with <code>err=True</code>. A successful command exits with zero.</li>
-<li><strong>Confirmation.</strong> Use <code>typer.confirm</code> for a destructive operation, and design a noninteractive path.</li>
-<li><strong>Testing.</strong> Read <code>tests/test_cli.py</code>. Notice that tests invoke the CLI and inject a fake API rather than needing the instructor server.</li>
-</ol>
-<p>Checkpoint commands after converting to a multi-command app:</p>
+<section id="tutorial" aria-label="Learn Typer"><h1>Part 1: a cargo-label CLI</h1>
+<p>Keep editing <code>tutorial/main.py</code> throughout this lesson. It starts as an ordinary Python function. This program prints labels; it never contacts the game server or changes your cargo.</p>
+<p>Run commands from the repository root. If you lose your place, open the linked checkpoint and copy its contents into <code>tutorial/main.py</code>. Each checkpoint is a complete file. Use the checkpoint that matches your current step.</p>
+<h2>1. Run the starting file</h2>
+<pre><code class="language-sh">uv run python tutorial/main.py
+</code></pre>
+<p>You should see <code>Cargo: food</code>. Find the line that supplies <code>"food"</code> to the function. We want to supply that value in the terminal instead. <a href="../tutorial/checkpoints/00_start.py">Starting file</a>.</p>
+<h2>2. Let Typer supply the argument</h2>
+<p>Import <code>typer</code>. Replace <code>print</code> with <code>typer.echo</code> and replace <code>label("food")</code> with <code>typer.run(label)</code>. Pass the function itself, without parentheses after <code>label</code>.</p>
+<pre><code class="language-sh">uv run python tutorial/main.py water
+uv run python tutorial/main.py --help
+uv run python tutorial/main.py
+</code></pre>
+<p>Predict each result before running it. <code>water</code> should print a label. <code>--help</code> should describe the required <code>ITEM</code>. The last call should fail because no item was supplied. <a href="../tutorial/checkpoints/01_argument.py">Checkpoint 01</a>.</p>
+<h2>3. Add a quantity option</h2>
+<p>Add <code>quantity: int = 1</code> to the function signature. Add <code>typer.echo(f"Units: {quantity}")</code> after the cargo line. Keep the import and entry point.</p>
+<pre><code class="language-sh">uv run python tutorial/main.py food
+uv run python tutorial/main.py food --quantity 2
+</code></pre>
+<p>The first label has one unit. The second has two. <code>food</code> is a positional argument; <code>--quantity</code> is a named option. <a href="../tutorial/checkpoints/02_quantity.py">Checkpoint 02</a>.</p>
+<h2>4. Exercise: uppercase labels</h2>
+<p>Add an <code>--uppercase</code> flag without breaking quantity. Start with <code>uppercase: bool = False</code> in the signature. Use <code>item.upper()</code> only when the flag is set.</p>
+<pre><code class="language-sh">uv run python tutorial/main.py food --uppercase --quantity 2
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">Cargo: FOOD
+Units: 2
+</code></pre>
+<p>Run again without <code>--uppercase</code>: the name should stay lowercase. Do not put <code>True</code> after the flag. If finished early, inspect <code>--help</code> and try the negative form. Compare with <a href="../tutorial/checkpoints/03_flag.py">checkpoint 03</a> after your attempt.</p>
+<h2>5. Add help to the option</h2>
+<p>Import <code>Annotated</code> from <code>typing</code>. Replace only the quantity parameter with:</p>
+<pre><code class="language-python">quantity: Annotated[
+    int, typer.Option(help=&quot;Number of cargo units.&quot;)
+] = 1,
+</code></pre>
+<p>This belongs inside <code>def label(...)</code>. Keep <code>item</code> and <code>uppercase</code>. Add a command description and an example to the function docstring, then run <code>--help</code>. Find both the description and the option's help text. <a href="../tutorial/checkpoints/04_help.py">Checkpoint 04</a>.</p>
+<h2>6. Reject quantities that cannot fit</h2>
+<p>Add <code>min=1, max=6</code> to the same <code>typer.Option(...)</code>. The integer type checks whether the input is a number; the range checks whether that number is allowed.</p>
+<pre><code class="language-sh">uv run python tutorial/main.py food --quantity 6
+uv run python tutorial/main.py food --quantity 0
+uv run python tutorial/main.py food --quantity two
+</code></pre>
+<p>Six should succeed. Zero and <code>two</code> should fail for different reasons, before a label is printed. Explain those reasons to the person beside you. <a href="../tutorial/checkpoints/05_validation.py">Checkpoint 05</a>.</p>
+<h2>7. Add a second command</h2>
+<p>Create <code>app = typer.Typer(no_args_is_help=True)</code> after the imports. Put <code>@app.command()</code> above the existing <code>label</code> function. Keep its parameters and body.</p>
+<p>Add an <code>items</code> function below it, also decorated with <code>@app.command()</code>. Give it a docstring and print <code>food, water, tools, medicine, fuel, parts</code>. Finally, replace <code>typer.run(label)</code> with <code>app()</code>.</p>
 <pre><code class="language-sh">uv run python tutorial/main.py --help
-uv run python tutorial/main.py hello --help
-uv run python tutorial/main.py hello Alex --count 2
-</code></pre></section>
+uv run python tutorial/main.py items
+uv run python tutorial/main.py label --help
+uv run python tutorial/main.py label water --quantity 3
+</code></pre>
+<p>The <code>label</code> command name is now required before the item. Top-level help lists commands; <code>label --help</code> explains the inputs for label. <a href="../tutorial/checkpoints/06_commands.py">Checkpoint 06</a>.</p>
+<h2>8. Use the same structure in the game client</h2>
+<p>Open <code>cli.py</code>. It already has a Typer app and a <code>status</code> command. Keep that command and its imports. The instructor will add <code>map</code> with you, calling <code>GameClient.from_config().map()</code> and printing each station's ID and supplies.</p>
+<p>Put new commands above the final <code>if __name__ == "__main__": app()</code> block. Keep API calls inside command functions so help stays available offline.</p>
+<p>The completed map command, for reference after following the live edit:</p>
+<pre><code class="language-python">@app.command(&quot;map&quot;)
+def show_map():
+    &quot;&quot;&quot;List stations and their supplies.&quot;&quot;&quot;
+    try:
+        data = GameClient.from_config().map()
+    except GameError as exc:
+        typer.echo(exc.message, err=True)
+        typer.echo(exc.hint, err=True)
+        raise typer.Exit(1)
+    for station in data[&quot;stations&quot;]:
+        supplies = &quot;, &quot;.join(station[&quot;supplies&quot;])
+        typer.echo(f&quot;{station['id']}: {supplies}&quot;)
+</code></pre>
+<p>Run <code>uv run python cli.py map --help</code>, then <code>uv run python cli.py map</code>. You should see five stations and the cargo available at each.</p>
+<p>Then add <code>contracts</code> yourself. Use the map command as your example. <code>game.list_contracts(status="open")</code> returns a dictionary with a <code>contracts</code> list. Each contract contains <code>id</code>, <code>item</code>, <code>quantity</code>, <code>source</code> and <code>destination</code>.</p>
+<p>If you need a starting point, complete this fragment inside your command:</p>
+<pre><code class="language-python">game = GameClient.from_config()
+data = game.list_contracts(status=&quot;open&quot;)
+for contract in data[&quot;contracts&quot;]:
+    # Print the ID, amount, cargo, source and destination.
+    ...
+</code></pre>
+<p>Keep configuration, the API call and the existing <code>GameError</code> handling together. The supplied <a href="#api">API guide</a> describes the dictionaries. Your command should let someone choose a delivery without reading Python.</p>
+<p>Continue with <a href="#exercises">the build exercise</a>. Optional features are in <a href="#patterns">CLI patterns</a>.</p></section>
+<section id="patterns" aria-label="CLI patterns"><h1>CLI patterns to use during the build</h1>
+<p>Use these when the basic delivery flow works or when you need a particular feature. They are not extra steps everyone must finish in the first lesson. The <a href="https://typer.tiangolo.com/tutorial/">Typer tutorial</a> has complete examples.</p>
+<h2>Expected failures and exit codes</h2>
+<p>Copy the pattern already used by <code>status</code> in <code>cli.py</code>. Both <code>GameClient.from_config()</code> and the network call belong inside the <code>try</code> block. Configuration can fail before a request.</p>
+<pre><code class="language-python">try:
+    state = GameClient.from_config().status()
+except GameError as exc:
+    typer.echo(f&quot;Error: {exc.message}\n{exc.hint}&quot;, err=True)
+    raise typer.Exit(1) from None
+</code></pre>
+<p>Results go to stdout. Diagnostics go to stderr. A successful command exits with zero; expected failures use a nonzero code. Avoid dumping a traceback for an ordinary full-cargo or network error. <a href="https://typer.tiangolo.com/tutorial/terminating/">Typer termination</a>.</p>
+<h2>JSON output</h2>
+<p>The starter's <code>status --json</code> shows this pattern. The Python parameter is <code>as_json</code>, while the explicit terminal name is <code>--json</code>:</p>
+<pre><code class="language-python">as_json: Annotated[
+    bool, typer.Option(&quot;--json&quot;, help=&quot;Print JSON for scripts.&quot;)
+] = False
+</code></pre>
+<p>After obtaining <code>state</code>, print either <code>json.dumps(state)</code> or human-readable output. Do not print a heading, success message or progress bar on stdout in JSON mode. Test by passing <code>result.stdout</code> to <code>json.loads</code>. <a href="https://clig.dev/#output">CLI output guidance</a>.</p>
+<h2>Confirming a practice reset</h2>
+<p>Explain what resets: location, cargo, completed contracts and practice points. Identity stays registered. This fragment assumes a <code>yes: bool = False</code> option and imports of <code>sys</code> and <code>typer</code>:</p>
+<pre><code class="language-python">if not yes:
+    if not sys.stdin.isatty():
+        typer.echo(&quot;Pass --yes to confirm the reset.&quot;, err=True)
+        raise typer.Exit(2)
+    if not typer.confirm(&quot;Erase your practice progress?&quot;, err=True):
+        raise typer.Exit(0)
+# Call game.reset_practice() inside the usual GameError handler.
+</code></pre>
+<p>Try declining and accepting. Declining must leave state unchanged. A redirected command should never wait indefinitely for input. <a href="https://typer.tiangolo.com/tutorial/prompt/">Typer prompts</a>.</p>
+<h2>Restricting station names</h2>
+<p>An Enum lets Typer list valid choices and catch spelling errors before a request:</p>
+<pre><code class="language-python">from enum import Enum
+
+class Station(str, Enum):
+    earth = &quot;earth&quot;
+    luna = &quot;luna&quot;
+    mars = &quot;mars&quot;
+    europa = &quot;europa&quot;
+    titan = &quot;titan&quot;
+</code></pre>
+<p>Use <code>destination: Station</code> in the command and pass <code>destination.value</code> to <code>game.travel</code>. A string argument also works; the server validates it. Use an Enum when showing the choices locally improves help. <a href="https://typer.tiangolo.com/tutorial/parameter-types/enum/">Typer choices</a>.</p>
+<h2>Command groups</h2>
+<p>A flat CLI is enough for this exercise. If several actions belong together, register a sub-app:</p>
+<pre><code class="language-python">contracts_app = typer.Typer(help=&quot;Find delivery contracts.&quot;)
+app.add_typer(contracts_app, name=&quot;contracts&quot;)
+
+@contracts_app.command(&quot;list&quot;)
+def list_contracts():
+    # Call the wrapper and format the result here.
+    ...
+</code></pre>
+<p>The path becomes <code>python cli.py contracts list</code>. Document both <code>contracts --help</code> and <code>contracts list --help</code>. Avoid keeping a flat command with the same <code>contracts</code> name. <a href="https://typer.tiangolo.com/tutorial/subcommands/">Typer subcommands</a>.</p>
+<h2>Testing the interface</h2>
+<p>Read <code>tests/test_cli.py</code>: it invokes commands with <code>CliRunner</code> and supplies a fake API. Test behaviours users depend on: help works without credentials, bad input makes no request, failures use stderr, cancellation leaves state unchanged, and JSON parses.</p>
+<p>The tests in <code>tests/test_tutorial.py</code> also check the change from a single command to <code>label</code> and <code>items</code>. Run them with <code>uv run pytest -q tests/test_tutorial.py</code>. <a href="https://typer.tiangolo.com/tutorial/testing/">Typer testing</a>.</p>
+<h2>More to explore after the workshop</h2>
+<p>Completion, packaged command names, aliases and progress indicators each add behaviour to document and test. Keep redirected output plain, send progress to stderr and make Ctrl+C responsive. Use the configuration precedence documented in the README; never include tokens in examples or submissions. For broader decisions, use <a href="https://clig.dev/">Command Line Interface Guidelines</a>.</p></section>
 <section id="exercises" aria-label="Build your CLI"><h1>Build your CLI</h1>
 <h2>Milestone 1: discovery (20 minutes)</h2>
 <p>Add commands to list stations and open contracts. Give commands short descriptions. Make a contract ID easy to find and inspect. Verify every help page without a running server.</p>
@@ -207,6 +325,17 @@ print(state[&quot;location&quot;])
 <p>Contract filter values are <code>all</code>, <code>open</code>, and <code>completed</code>. A practice contract looks like:</p>
 <pre><code class="language-json">{&quot;id&quot;:&quot;P01&quot;,&quot;item&quot;:&quot;food&quot;,&quot;source&quot;:&quot;earth&quot;,&quot;destination&quot;:&quot;luna&quot;,&quot;quantity&quot;:2,&quot;reward&quot;:10,&quot;completed&quot;:false}
 </code></pre>
+<p><code>game.list_contracts(status="open")</code> puts those objects in <code>data["contracts"]</code>. Loop over that list, not the outer dictionary.</p>
+<p><code>game.map()</code> has a similar structure: <code>data["stations"]</code> is a list of station dictionaries. The first two entries look like this (the full response also includes Mars, Europa and Titan):</p>
+<pre><code class="language-json">{
+  &quot;stations&quot;: [
+    {&quot;id&quot;: &quot;earth&quot;, &quot;name&quot;: &quot;Earth&quot;, &quot;supplies&quot;: [&quot;food&quot;, &quot;water&quot;]},
+    {&quot;id&quot;: &quot;luna&quot;, &quot;name&quot;: &quot;Luna&quot;, &quot;supplies&quot;: [&quot;tools&quot;]}
+  ],
+  &quot;travel_rule&quot;: &quot;Any station is reachable directly. Travel is free.&quot;
+}
+</code></pre>
+<p>The excerpt shows the fields used in the lesson; see the server's <code>/docs</code> for the full response. Join a station's <code>supplies</code> list with <code>", ".join(station["supplies"])</code> when formatting a line for a person.</p>
 <h2>A write example</h2>
 <pre><code class="language-python"># This changes your practice state. Call it only when you intend to load cargo.
 game.travel(&quot;earth&quot;)
