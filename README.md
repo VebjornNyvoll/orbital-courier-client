@@ -1,5 +1,7 @@
 # Orbital Courier: build a great Python CLI
 
+Open [the styled workshop guide](docs/index.html) in a browser after cloning. It includes setup, the Typer tutorial, exercises and API guidance, and works offline.
+
 A hands-on Typer workshop for people who already write Python. You will design a CLI for a small delivery game. The supplied `game_api.py` handles HTTP, configuration, and network failures.
 
 ## Before the workshop

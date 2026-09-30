@@ -1,0 +1,240 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbital Courier · Workshop guide</title><link rel="stylesheet" href="brand/theme.css"><style>
+html{scroll-padding-top:24px}body{margin:0}header{padding:56px max(24px,calc((100vw - 1120px)/2));background:var(--ffe-color-surface-secondary-default)}header p{max-width:720px;font-size:1.25rem}header h1{font-size:clamp(2.5rem,5vw,4rem);margin:16px 0}header small{font-family:'SpareBank1 Medium',sans-serif}nav{display:flex;gap:16px 24px;flex-wrap:wrap;margin-top:32px}main{max-width:1120px;margin:auto;padding:32px 24px 64px}section{max-width:900px;margin:0 auto 48px;padding:32px;background:var(--ffe-color-background-default);border:1px solid var(--ffe-color-border-primary-subtle);border-radius:16px}section h1{font-size:2rem}h2{font-size:1.6rem;margin-top:40px}h3{font-size:1.2rem}p,li{font-size:1.1rem}li{margin:8px 0}pre{overflow-x:auto;white-space:pre;font-size:1rem}table{width:100%;border-collapse:collapse;display:block;overflow:auto}td,th{text-align:left;padding:12px;border-bottom:1px solid var(--ffe-color-border-primary-subtle)}footer{max-width:900px;margin:0 auto;padding:0 24px 40px}.skip{position:absolute;left:16px;top:-100px}.skip:focus{top:12px;background:white;padding:12px}@media(max-width:600px){section{padding:20px}main{padding:24px 12px}pre{padding:16px}}
+</style><a class="skip" href="#start">Skip to the guide</a><header><small>Python CLI workshop</small><h1>Build a CLI people can use.</h1><p>Learn Typer, turn the supplied game functions into clear commands, and help a new user complete their first delivery.</p><nav aria-label="Workshop sections"><a href="#start">Get started</a><a href="#tutorial">Learn Typer</a><a href="#exercises">Build your CLI</a><a href="#rules">Game rules</a><a href="#api">API guide</a><a href="#usage">Your usage guide</a></nav></header><main><section id="start" aria-label="Get started"><h1>Orbital Courier: build a great Python CLI</h1>
+<p>Open <a href="#start">the styled workshop guide</a> in a browser after cloning. It includes setup, the Typer tutorial, exercises and API guidance, and works offline.</p>
+<p>A hands-on Typer workshop for people who already write Python. You will design a CLI for a small delivery game. The supplied <code>game_api.py</code> handles HTTP, configuration, and network failures.</p>
+<h2>Before the workshop</h2>
+<p>Install <strong>Python 3.12+</strong>, <strong>Git</strong>, and <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a>. An editor and terminal are enough. Run the following on Windows PowerShell, macOS, or Linux:</p>
+<p>If using a workshop cloud VM, run these commands in that VM's terminal and edit the checkout there. The game server is hosted separately; you do not need to install or start it.</p>
+<pre><code class="language-sh">git clone https://github.com/VebjornNyvoll/orbital-courier-client.git
+cd orbital-courier-client
+uv sync --frozen
+uv run python tutorial/main.py Alex
+uv run python tutorial/main.py --help
+uv run pytest -q
+</code></pre>
+<p>The repository is private initially. Your instructor must give you access before cloning, or provide a ZIP. For a ZIP, extract it and start at <code>uv sync --frozen</code>.</p>
+<h2>Part 1: your first Typer CLI</h2>
+<p>Edit <code>tutorial/main.py</code> as the instructor explains arguments, options, help, validation, and commands. This exercise needs no game server. <a href="#tutorial">Follow-along checkpoints</a> tell you what to try after each step.</p>
+<h2>Part 2: your courier CLI</h2>
+<p>Your instructor supplies the public HTTPS server URL and workshop join code. Use the base URL without <code>/docs</code> or <code>/api</code>. Register once:</p>
+<pre><code class="language-sh">uv run python setup_player.py
+uv run python cli.py --help
+uv run python cli.py status
+</code></pre>
+<p>Setup saves <code>.player.json</code> in this checkout. Do not share it or commit it. If a registration response is lost, ask the instructor to recover your token instead of registering a second identity. Your token can also be used in the server's <code>/docs</code> page under <strong>Authorize</strong>. Paste only the token, without the word <code>Bearer</code>.</p>
+<p>Work primarily in <code>cli.py</code>. See <a href="#exercises">the exercises</a>, <a href="#rules">game rules</a>, and <a href="#api">API guide</a>. Write your usage examples in <code>USAGE.md</code>. Additional Python command modules may live in <code>commands/</code>. Use the dependencies already provided so everyone can run your CLI consistently.</p>
+<h2>Your target</h2>
+<p>Someone should be able to find a contract, inspect its requirements, load cargo, and make a delivery using only your help text and usage guide. They should also understand how to recover from a mistake.</p>
+<p>Useful checks:</p>
+<pre><code class="language-sh">uv run pytest -q
+uv run ruff check .
+uv run python cli.py status --json
+uv run python export_submission.py
+</code></pre>
+<p>The last command creates <code>submission.zip</code> containing only <code>cli.py</code>, <code>USAGE.md</code>, and optional <code>commands/*.py</code> files. It excludes the supplied infrastructure and your saved credentials.</p>
+<h2>Configuration and troubleshooting</h2>
+<ul>
+<li>Configuration precedence: <code>ORBITAL_URL</code> / <code>ORBITAL_TOKEN</code> environment variables, then <code>.player.json</code>. Environment variables override each field separately.</li>
+<li>No configuration? Run <code>setup_player.py</code>. Keep API calls inside command functions so help works without configuration.</li>
+<li>Connection failure? Check the URL with the instructor and open <code>&lt;server&gt;/health</code> in a browser. In a cloud VM, <code>localhost</code> means the VM itself. Use the instructor's public HTTPS URL; no incoming VM ports are needed.</li>
+<li>A free host may take about a minute to wake. Wait until <code>/health</code> returns <code>{"status":"ok"}</code>, then retry a status command. If registration failed after submission, ask for token recovery before registering again.</li>
+<li>Cargo full? Deliver it or unload it. Capacity is six units across all items.</li>
+<li>Invalid token? Ask the instructor for recovery and rerun setup, selecting an existing token.</li>
+<li><code>--help</code> output is available offline. Shell completion is optional and shell-dependent.</li>
+</ul>
+<h2>Further reading</h2>
+<p><a href="https://clig.dev/">CLI Guidelines</a> · <a href="https://typer.tiangolo.com/tutorial/">Typer tutorial</a> · <a href="https://typer.tiangolo.com/tutorial/testing/">Typer testing</a></p></section>
+<section id="tutorial" aria-label="Learn Typer"><h1>Part 1 follow-along checkpoints</h1>
+<p>Start in <code>tutorial/main.py</code>. The instructor's examples use this file until the game exercise begins.</p>
+<ol>
+<li><strong>Function to command.</strong> Run <code>uv run python tutorial/main.py Alex</code>, then <code>--help</code>. A required <code>str</code> becomes a positional argument.</li>
+<li><strong>Named options.</strong> Add <code>formal: bool = False</code>. Try <code>Alex --formal</code>. Explain that a Python default normally creates a CLI option.</li>
+<li><strong>Help with Annotated.</strong> Import <code>Annotated</code> from <code>typing</code>. Write <code>name: Annotated[str, typer.Argument(help="Courier name.")]</code>. Add an explicit option with help.</li>
+<li><strong>Validation.</strong> Add <code>count: Annotated[int, typer.Option(min=1, max=5, help="Number of greetings.")] = 1</code>. Try <code>--count 0</code> and <code>--count banana</code>.</li>
+<li><strong>Several commands.</strong> Replace <code>typer.run(hello)</code> with <code>app = typer.Typer(...)</code>, decorate functions with <code>@app.command()</code>, and call <code>app()</code>. Add a callback so even one registered command keeps its explicit command name.</li>
+<li><strong>Command groups.</strong> Discuss <code>add_typer</code> and <code>contracts list</code>. Keep this optional if the group needs more practice with single commands.</li>
+<li><strong>Failures.</strong> Raise <code>typer.Exit(1)</code> after printing an expected failure with <code>err=True</code>. A successful command exits with zero.</li>
+<li><strong>Confirmation.</strong> Use <code>typer.confirm</code> for a destructive operation, and design a noninteractive path.</li>
+<li><strong>Testing.</strong> Read <code>tests/test_cli.py</code>. Notice that tests invoke the CLI and inject a fake API rather than needing the instructor server.</li>
+</ol>
+<p>Checkpoint commands after converting to a multi-command app:</p>
+<pre><code class="language-sh">uv run python tutorial/main.py --help
+uv run python tutorial/main.py hello --help
+uv run python tutorial/main.py hello Alex --count 2
+</code></pre></section>
+<section id="exercises" aria-label="Build your CLI"><h1>Build your CLI</h1>
+<h2>Milestone 1: discovery (20 minutes)</h2>
+<p>Add commands to list stations and open contracts. Give commands short descriptions. Make a contract ID easy to find and inspect. Verify every help page without a running server.</p>
+<p>Done when: another person can identify the cargo, quantity, source, and destination for one delivery without reading Python.</p>
+<h2>Milestone 2: a complete delivery (30 minutes)</h2>
+<p>Add travel, loading, and delivery commands. Use an argument for the thing being acted on and options for modifiers where that makes sense. Validate quantities before sending the request. Handle <code>GameError</code> with stderr and a nonzero exit code.</p>
+<p>Done when: one contract can be completed entirely through your CLI, and an invalid quantity produces a useful error.</p>
+<h2>Milestone 3: recovery and documentation (20 minutes)</h2>
+<p>Add unloading and practice reset. Confirm before reset; optionally accept <code>--yes</code> for scripts. A noninteractive invocation should fail with instructions instead of waiting for input. Describe capacity and practice-only restrictions. Fill in <code>USAGE.md</code> with current examples.</p>
+<p>Done when: someone can recover from filling their ship with the wrong item and can cancel a reset safely.</p>
+<h2>Milestone 4: usability rehearsal (20 minutes)</h2>
+<p>Try these without inspecting your code: find help, complete a delivery, correct a typo, handle full cargo, and recover from a server connection failure. Improve the weakest interaction.</p>
+<p>Run <code>uv run python export_submission.py</code> when asked by the instructor.</p>
+<h2>Extensions for faster participants</h2>
+<ul>
+<li>Group commands such as <code>contracts list</code> and <code>contracts show</code>.</li>
+<li>Add <code>--json</code> while keeping stdout valid JSON and errors on stderr.</li>
+<li>Filter contracts and show useful cargo tables with Rich.</li>
+<li>Add a test for invalid input, cancellation, or a failing API operation using <code>CliRunner</code> and a fake API.</li>
+<li>Add explicit configuration options with documented precedence over environment and saved settings.</li>
+<li>Add a progress indicator on stderr, disabled for noninteractive output.</li>
+<li>Explore shell completion and a packaged command entry point after the core CLI works.</li>
+</ul>
+<p>Avoid an automatic solver: this exercise measures how clearly a human can operate your commands.</p></section>
+<section id="rules" aria-label="Game rules"><h1>Orbital Courier rules</h1>
+<p>You pilot a ship between Earth, Luna, Mars, Europa, and Titan. Complete delivery contracts to earn points.</p>
+<ol>
+<li>Inspect an open contract. It tells you the cargo, quantity, source, destination, and reward.</li>
+<li>Travel to its source station.</li>
+<li>Load the required cargo.</li>
+<li>Travel to its destination.</li>
+<li>Deliver the contract. The game consumes the cargo and awards ten points.</li>
+</ol>
+<p>Your ship holds <strong>six units total</strong>. Supplies are unlimited. Any station is directly reachable from any other station. Travel costs nothing. Each player has independent state, so nobody can take your cargo or contracts.</p>
+<table>
+<thead>
+<tr>
+<th>Station</th>
+<th>Supplies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Earth</td>
+<td>food, water</td>
+</tr>
+<tr>
+<td>Luna</td>
+<td>tools</td>
+</tr>
+<tr>
+<td>Mars</td>
+<td>medicine</td>
+</tr>
+<tr>
+<td>Europa</td>
+<td>fuel</td>
+</tr>
+<tr>
+<td>Titan</td>
+<td>parts</td>
+</tr>
+</tbody>
+</table>
+<p>There are twelve contracts per round. Each can score once, giving a maximum personal score of 120. Unloading discards cargo without awarding points and works at every station. Invalid actions do not change game state.</p>
+<p>In practice you may reset your own position, cargo, completed contracts, and points. Your identity stays registered. After practice, reset and registration close. A fresh round uses new contract IDs and quantities. Always inspect the current contract instead of memorizing an example.</p>
+<p>During timed play, the instructor can pause or end the round. Read-only commands continue to work while gameplay actions are disabled. Reaching the time limit freezes scores. No autonomous game-playing loops or direct API calls during timed play; use your CLI for each gameplay action.</p></section>
+<section id="api" aria-label="API guide"><h1>Provided Python API</h1>
+<pre><code class="language-python">from game_api import GameClient, GameError
+
+game = GameClient.from_config()
+state = game.status()
+print(state[&quot;location&quot;])
+</code></pre>
+<p>Every method returns a normal Python dictionary. These are synchronous functions. You do not need async code, an HTTP library, or a server installation.</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Result</th>
+<th>HTTP operation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>game.status()</code></td>
+<td>location, cargo, score, completed, name, mode, capacity, supplies_here, player_id</td>
+<td>GET /api/me</td>
+</tr>
+<tr>
+<td><code>game.session()</code></td>
+<td>mode, seconds_remaining</td>
+<td>GET /api/session</td>
+</tr>
+<tr>
+<td><code>game.map()</code></td>
+<td>stations, travel_rule</td>
+<td>GET /api/map</td>
+</tr>
+<tr>
+<td><code>game.list_contracts(status="open")</code></td>
+<td>contracts list</td>
+<td>GET /api/contracts</td>
+</tr>
+<tr>
+<td><code>game.get_contract("P01")</code></td>
+<td>one contract</td>
+<td>GET /api/contracts/P01</td>
+</tr>
+<tr>
+<td><code>game.travel("luna")</code></td>
+<td>updated player state</td>
+<td>POST /api/travel</td>
+</tr>
+<tr>
+<td><code>game.load_cargo("food", quantity=2)</code></td>
+<td>updated player state</td>
+<td>POST /api/cargo/load</td>
+</tr>
+<tr>
+<td><code>game.unload_cargo("food", quantity=1)</code></td>
+<td>updated player state</td>
+<td>POST /api/cargo/unload</td>
+</tr>
+<tr>
+<td><code>game.deliver("P01")</code></td>
+<td>updated player state</td>
+<td>POST /api/contracts/P01/deliver</td>
+</tr>
+<tr>
+<td><code>game.reset_practice()</code></td>
+<td>fresh player state</td>
+<td>POST /api/practice/reset</td>
+</tr>
+<tr>
+<td><code>game.rename("Alex")</code></td>
+<td>name</td>
+<td>PUT /api/me/profile</td>
+</tr>
+</tbody>
+</table>
+<p>Contract filter values are <code>all</code>, <code>open</code>, and <code>completed</code>. A practice contract looks like:</p>
+<pre><code class="language-json">{&quot;id&quot;:&quot;P01&quot;,&quot;item&quot;:&quot;food&quot;,&quot;source&quot;:&quot;earth&quot;,&quot;destination&quot;:&quot;luna&quot;,&quot;quantity&quot;:2,&quot;reward&quot;:10,&quot;completed&quot;:false}
+</code></pre>
+<h2>A write example</h2>
+<pre><code class="language-python"># This changes your practice state. Call it only when you intend to load cargo.
+game.travel(&quot;earth&quot;)
+state = game.load_cargo(&quot;food&quot;, quantity=2)
+</code></pre>
+<h2>Expected failures</h2>
+<pre><code class="language-python">try:
+    state = game.load_cargo(&quot;food&quot;, quantity=2)
+except GameError as exc:
+    # Decide how your CLI should present the problem.
+    # exc.code: stable error identifier, e.g. &quot;cargo_full&quot;
+    # exc.message: what went wrong
+    # exc.hint: how to recover
+    # exc.status: HTTP status, or 0 for a local/network error
+    ...
+</code></pre>
+<p>Common codes: <code>configuration</code>, <code>connection</code>, <code>unauthorized</code>, <code>cargo_full</code>, <code>missing_cargo</code>, <code>wrong_station</code>, <code>unavailable_cargo</code>, <code>already_delivered</code>, <code>practice_only</code>, <code>round_inactive</code>.</p>
+<p><code>get(path, **params)</code>, <code>post(path, **body)</code>, and <code>put(path, **body)</code> exist to illustrate the underlying HTTP operations. Prefer the named methods in your workshop CLI.</p>
+<p>The wrapper uses five-second HTTP timeouts and at most one automatic transport retry. Mutating POST retries reuse a unique request key. Registration is never retried automatically. If both attempts fail, inspect your status before issuing a new command: a lost response does not prove that an action failed.</p></section>
+<section id="usage" aria-label="Your usage guide"><h1>My courier CLI</h1>
+<p>Replace this page with a short guide someone can use without reading your code.</p>
+<p>Include:</p>
+<ul>
+<li>How to run your CLI and find command help.</li>
+<li>One complete delivery example using current contract data.</li>
+<li>How to inspect cargo and recover from loading the wrong item.</li>
+<li>What reset does and how to confirm it.</li>
+<li>Any optional command groups or output formats you added.</li>
+</ul>
+<p>Keep all CLI code in <code>cli.py</code> or an optional <code>commands/</code> directory. Use the provided dependencies.
+Do not put credentials or server configuration into examples.</p></section></main><footer>Visual foundations: <a href="../BRANDING.md">SpareBank 1 FFE</a>. Works offline. Edit the Markdown sources and run <code>uv run docs/build_guide.py</code> to refresh this guide.</footer></html>
