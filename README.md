@@ -6,6 +6,8 @@ A hands-on Typer workshop for people who already write Python. You will design a
 
 Install **Python 3.12+**, **Git**, and [uv](https://docs.astral.sh/uv/getting-started/installation/). An editor and terminal are enough. Run the following on Windows PowerShell, macOS, or Linux:
 
+If using a workshop cloud VM, run these commands in that VM's terminal and edit the checkout there. The game server is hosted separately; you do not need to install or start it.
+
 ```sh
 git clone https://github.com/VebjornNyvoll/orbital-courier-client.git
 cd orbital-courier-client
@@ -23,7 +25,7 @@ Edit `tutorial/main.py` as the instructor explains arguments, options, help, val
 
 ## Part 2: your courier CLI
 
-Your instructor supplies the server URL and workshop join code. Register once:
+Your instructor supplies the public HTTPS server URL and workshop join code. Use the base URL without `/docs` or `/api`. Register once:
 
 ```sh
 uv run python setup_player.py
@@ -54,7 +56,8 @@ The last command creates `submission.zip` containing only `cli.py`, `USAGE.md`, 
 
 - Configuration precedence: `ORBITAL_URL` / `ORBITAL_TOKEN` environment variables, then `.player.json`. Environment variables override each field separately.
 - No configuration? Run `setup_player.py`. Keep API calls inside command functions so help works without configuration.
-- Connection failure? Check the URL with the instructor and open `<server>/health` in a browser. `localhost` means your own computer.
+- Connection failure? Check the URL with the instructor and open `<server>/health` in a browser. In a cloud VM, `localhost` means the VM itself. Use the instructor's public HTTPS URL; no incoming VM ports are needed.
+- A free host may take about a minute to wake. Wait until `/health` returns `{"status":"ok"}`, then retry a status command. If registration failed after submission, ask for token recovery before registering again.
 - Cargo full? Deliver it or unload it. Capacity is six units across all items.
 - Invalid token? Ask the instructor for recovery and rerun setup, selecting an existing token.
 - `--help` output is available offline. Shell completion is optional and shell-dependent.
