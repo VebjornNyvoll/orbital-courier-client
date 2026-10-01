@@ -5,8 +5,8 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-import setup_player
-from game_api import GameClient
+from verktoy import oppsett as setup_player
+from verktoy.api import GameClient
 
 
 @pytest.mark.parametrize("failure", [None, httpx.ReadTimeout, httpx.ConnectError])
@@ -38,8 +38,8 @@ def test_setup_checks_readiness_before_registering(tmp_path, monkeypatch, failur
         assert result.exit_code == 1
         assert len(requests) == 1
         assert not config.exists()
-        assert "No registration was submitted" in result.stderr
-        assert "Display name" not in result.output
+        assert "Ingen registrering er sendt" in result.stderr
+        assert "Navn i spillet" not in result.output
     else:
         assert result.exit_code == 0, result.output
         assert [r.method for r in requests] == ["GET", "POST"]

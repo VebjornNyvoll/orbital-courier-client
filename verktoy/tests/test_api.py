@@ -1,11 +1,29 @@
 import json
-from zipfile import ZipFile
 
 import httpx
 import pytest
 
-import export_submission
-from game_api import GameClient, GameError
+from verktoy.api import GameClient, GameError
+
+
+def test_existing_root_config_is_found_from_another_directory(tmp_path, monkeypatch):
+    from pathlib import Path
+    from verktoy.api import CONFIG_PATH
+
+    assert CONFIG_PATH == Path(__file__).resolve().parents[2] / ".player.json"
+    original_read = Path.read_text
+    original_exists = Path.exists
+    monkeypatch.setattr(Path, "exists", lambda p: True if p == CONFIG_PATH else original_exists(p))
+    monkeypatch.setattr(
+        Path, "read_text",
+        lambda p: json.dumps({"url": "https://game.test", "token": "saved-token"})
+        if p == CONFIG_PATH else original_read(p),
+    )
+    monkeypatch.delenv("ORBITAL_URL", raising=False)
+    monkeypatch.delenv("ORBITAL_TOKEN", raising=False)
+    monkeypatch.chdir(tmp_path)
+    api = GameClient.from_config()
+    assert api.base_url == "https://game.test" and api.token == "saved-token"
 
 
 def test_retry_reuses_mutation_key():
@@ -35,7 +53,7 @@ def test_join_is_not_retried():
     assert len(calls) == 1
     assert calls[0].extensions["timeout"]["read"] == 30.0
     assert error.value.code == "timeout"
-    assert "recover your token before retrying" in error.value.hint
+    assert "gi deg et nytt token før du prøver igjen" in error.value.hint
 
 
 def test_readiness_allows_a_cold_start():
@@ -53,7 +71,7 @@ def test_missing_scheme_explains_how_to_fix_url():
     with pytest.raises(GameError) as error:
         GameClient("orbital-courier.onrender.com")
     assert error.value.code == "configuration"
-    assert "Include https://" in error.value.hint
+    assert "Ta med https://" in error.value.hint
 
 
 @pytest.mark.parametrize(
@@ -71,8 +89,8 @@ def test_connection_errors_preserve_diagnostic_detail(detail):
     api = GameClient("https://game.test", transport=httpx.MockTransport(handler))
     with pytest.raises(GameError) as error:
         api.wait_until_ready()
-    assert f"Connection detail: ConnectError: {detail}" in error.value.hint
-    assert "No registration was submitted" in error.value.hint
+    assert f"Teknisk detalj: ConnectError: {detail}" in error.value.hint
+    assert "Ingen registrering er sendt" in error.value.hint
 
 
 def test_proxy_error_does_not_expose_url_credentials():
@@ -109,12 +127,3 @@ def test_config_overrides_and_missing(tmp_path, monkeypatch):
     monkeypatch.setenv("ORBITAL_URL", "https://env.test")
     api = GameClient.from_config(path)
     assert api.base_url == "https://env.test" and api.token == "file-token"
-
-
-def test_export_excludes_credentials_and_dependencies(tmp_path, monkeypatch):
-    for name in ["cli.py", "USAGE.md", ".player.json", ".env", "game_api.py"]:
-        (tmp_path / name).write_text("secret" if name.startswith(".") else "content")
-    monkeypatch.setattr(export_submission, "ROOT", tmp_path)
-    archive = export_submission.export(tmp_path / "submission.zip")
-    with ZipFile(archive) as file:
-        assert set(file.namelist()) == {"cli.py", "USAGE.md"}

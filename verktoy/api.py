@@ -1,7 +1,7 @@
-"""Provided workshop infrastructure. You only need the named methods below.
+"""Ferdig API-klient. Du bruker funksjonene fra cli.py.
 
-Methods return ordinary dictionaries. Expected failures raise GameError with
-code, message, and hint. Configuration lives beside this file, never in a submission.
+Funksjonene returnerer vanlige dicts. Forventede feil gir GameError med code,
+message og hint. Serveradresse og token lagres i .player.json i root i repoet.
 """
 
 import json
@@ -13,7 +13,7 @@ from urllib.parse import quote, urlparse
 
 import httpx
 
-CONFIG_PATH = Path(__file__).with_name(".player.json")
+CONFIG_PATH = Path(__file__).resolve().parents[1] / ".player.json"
 
 
 class GameError(Exception):
@@ -23,10 +23,10 @@ class GameError(Exception):
 
 
 def connection_detail(exc: httpx.TransportError) -> str:
-    """Keep the useful network error without displaying credentials in proxy URLs."""
+    """Vis nettverksfeilen uten å vise innloggingsinfo fra proxy-adresser."""
     detail = re.sub(r"[a-zA-Z][a-zA-Z0-9+.-]*://\S+", "[URL]", str(exc))
     detail = " ".join(detail.split())[:500]
-    return f"Connection detail: {type(exc).__name__}: {detail}"
+    return f"Teknisk detalj: {type(exc).__name__}: {detail}"
 
 
 def validate_url(url: str) -> str:
@@ -39,11 +39,11 @@ def validate_url(url: str) -> str:
         or parsed.password
     ):
         raise GameError(
-            "configuration", "Server URL must be an http(s) address without credentials.",
-            "Include https://, for example https://orbital-courier.onrender.com.",
+            "configuration", "Serveradressen må starte med http:// eller https:// og være uten innloggingsinfo.",
+            "Ta med https://, f.eks. https://orbital-courier.onrender.com.",
         )
     if parsed.query or parsed.fragment:
-        raise GameError("configuration", "Server URL cannot include a query or fragment.")
+        raise GameError("configuration", "Serveradressen kan ikke inneholde en query eller et fragment.")
     return url.rstrip("/")
 
 
@@ -55,24 +55,24 @@ class GameClient:
 
     @classmethod
     def from_config(cls, path: Path = CONFIG_PATH):
-        """Environment variables ORBITAL_URL and ORBITAL_TOKEN override the local file."""
+        """Miljøvariablene ORBITAL_URL og ORBITAL_TOKEN overstyrer den lokale fila."""
         try:
             saved = json.loads(path.read_text()) if path.exists() else {}
             if not isinstance(saved, dict):
-                raise ValueError("configuration must be an object")
+                raise ValueError("oppsettet må være et objekt")
         except (OSError, ValueError):
             raise GameError(
                 "configuration",
-                "Cannot read player configuration.",
-                "Run uv run python setup_player.py to repair it.",
+                "Kan ikke lese spilleroppsettet.",
+                "Kjør uv run python -m verktoy.oppsett for å rette opp oppsettet.",
             ) from None
         url = os.environ.get("ORBITAL_URL") or saved.get("url")
         token = os.environ.get("ORBITAL_TOKEN") or saved.get("token")
         if not isinstance(url, str) or not isinstance(token, str) or not url or not token:
             raise GameError(
                 "configuration",
-                "Player configuration is missing.",
-                "Run uv run python setup_player.py first.",
+                "Spilleroppsett mangler.",
+                "Kjør uv run python -m verktoy.oppsett først.",
             )
         return cls(url, token)
 
@@ -80,7 +80,7 @@ class GameClient:
         headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
         if method == "POST" and path != "/api/join":
             headers["Idempotency-Key"] = str(uuid.uuid4())
-        # A retry uses the same key. Joining is deliberately never retried automatically.
+        # Et nytt forsøk bruker samme nøkkel. Registrering gjentas aldri automatisk.
         attempts = 1 if path in {"/api/join", "/health"} else 2
         with httpx.Client(timeout=timeout, transport=self.transport, follow_redirects=False) as client:
             for attempt in range(attempts):
@@ -92,23 +92,23 @@ class GameClient:
                 except httpx.TransportError as exc:
                     if attempt + 1 == attempts:
                         hint = (
-                            "Check the full server URL and the VM's internet connection."
+                            "Sjekk hele serveradressen og nettforbindelsen i miljøet du kjører fra."
                         )
                         if path == "/api/join":
                             hint += (
-                                " Registration may have reached the server. Ask the instructor"
-                                " to check your display name and recover your token before retrying."
+                                " Registreringen kan ha nådd serveren. Be instruktøren"
+                                " sjekke navnet ditt og gi deg et nytt token før du prøver igjen."
                             )
                         elif path == "/health":
-                            hint += " No registration was submitted; you can rerun setup."
+                            hint += " Ingen registrering er sendt. Du kan kjøre oppsettet på nytt."
                         else:
-                            hint += " Check status before repeating an action."
+                            hint += " Sjekk status før du gjentar en handling."
                         hint += "\n" + connection_detail(exc)
                         timed_out = isinstance(exc, httpx.TimeoutException)
                         raise GameError(
                             "timeout" if timed_out else "connection",
-                            "The game server did not respond in time."
-                            if timed_out else "Could not connect to the game server.",
+                            "Spillserveren svarte ikke innen tidsfristen."
+                            if timed_out else "Kunne ikke koble til spillserveren.",
                             hint,
                         ) from None
         try:
@@ -116,28 +116,28 @@ class GameClient:
         except ValueError:
             raise GameError(
                 "invalid_response",
-                "The server returned an unexpected response.",
-                "Check your server URL or ask the instructor.",
+                "Serveren ga et uventet svar.",
+                "Sjekk serveradressen eller spør instruktøren.",
                 response.status_code,
             ) from None
         if not response.is_success:
             error = data.get("error", {}) if isinstance(data, dict) else {}
             raise GameError(
                 error.get("code", "http_error"),
-                error.get("message", "Request failed."),
-                error.get("hint", "Ask the instructor for help."),
+                error.get("message", "Forespørselen feilet."),
+                error.get("hint", "Spør instruktøren om hjelp."),
                 response.status_code,
             )
         if not isinstance(data, dict):
-            raise GameError("invalid_response", "Expected a JSON object from the server.")
+            raise GameError("invalid_response", "Forventet et JSON-objekt fra serveren.")
         return data
 
     def get(self, path: str, **params):
-        """Low-level GET example. Prefer the named game methods in your CLI."""
+        """Gjør et GET-kall. Bruk helst spillfunksjonene under fra CLI-et ditt."""
         return self._request("GET", path, params=params)
 
     def post(self, path: str, **body):
-        """Low-level POST with a request key for safe network retries."""
+        """Gjør et POST-kall med samme forespørselsnøkkel ved gjentatte forsøk."""
         return self._request("POST", path, body=body)
 
     def put(self, path: str, **body):
@@ -149,12 +149,12 @@ class GameClient:
         )
 
     def wait_until_ready(self):
-        """Wake a sleeping host with a read-only request before submitting registration."""
+        """Sjekk serveren med et lesekall før vi sender en registrering."""
         data = self._request("GET", "/health", timeout=httpx.Timeout(120.0, connect=15.0))
         if data.get("status") != "ok":
             raise GameError(
-                "unavailable", "The game server is not ready.",
-                "No registration was submitted. Check the server URL or ask the instructor.",
+                "unavailable", "Spillserveren er ikke klar.",
+                "Ingen registrering er sendt. Sjekk serveradressen eller spør instruktøren.",
             )
         return data
 

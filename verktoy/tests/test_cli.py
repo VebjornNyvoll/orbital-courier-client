@@ -3,14 +3,14 @@ import json
 from typer.testing import CliRunner
 
 import cli
-from game_api import GameError
+from verktoy.api import GameError
 
 runner = CliRunner()
 
 
 def test_help_never_needs_server(monkeypatch):
     def unavailable(*args):
-        raise AssertionError("Help must work offline")
+        raise AssertionError("Hjelpetekst skal virke uten nett")
 
     monkeypatch.setattr(cli.GameClient, "from_config", unavailable)
     for args in (["--help"], ["status", "--help"], ["-h"]):
@@ -39,10 +39,10 @@ def test_json_is_clean(monkeypatch):
 
 def test_errors_use_stderr_and_failure_exit(monkeypatch):
     def unavailable():
-        raise GameError("connection", "Server unavailable.", "Check your connection.")
+        raise GameError("connection", "Serveren er utilgjengelig.", "Sjekk nettforbindelsen.")
 
     monkeypatch.setattr(cli.GameClient, "from_config", unavailable)
     result = runner.invoke(cli.app, ["status"])
     assert result.exit_code == 1
     assert not result.stdout
-    assert "Check your connection" in result.stderr
+    assert "Sjekk nettforbindelsen" in result.stderr
