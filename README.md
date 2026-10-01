@@ -1,4 +1,4 @@
-# Orbital Courier: build a great Python CLI
+# Kometfrakteratene: build a great Python CLI
 
 Open [the styled workshop guide](docs/index.html) in a browser after cloning. It includes setup, the Typer tutorial, exercises and API guidance, and works offline.
 

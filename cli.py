@@ -12,7 +12,7 @@ app = typer.Typer(no_args_is_help=True, context_settings={"help_option_names": [
 
 @app.callback()
 def main():
-    """Orbital Courier: inspect your ship and complete deliveries.
+    """Kometfrakteratene: inspect your ship and complete deliveries.
 
     Start with: uv run python cli.py status
     """

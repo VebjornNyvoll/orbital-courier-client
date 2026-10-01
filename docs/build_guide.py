@@ -40,7 +40,7 @@ html{scroll-padding-top:24px}body{margin:0}header{padding:56px max(24px,calc((10
 (ROOT / "docs/index.html").write_text(
     '<!doctype html><html lang="en"><meta charset="utf-8">'
     '<meta name="viewport" content="width=device-width,initial-scale=1">'
-    '<title>Orbital Courier · Workshop guide</title>'
+    '<title>Kometfrakteratene · Workshop guide</title>'
     f'<link rel="stylesheet" href="brand/theme.css"><style>{style}</style>'
     '<a class="skip" href="#start">Skip to the guide</a><header>'
     '<small>Python CLI workshop</small><h1>Build a CLI people can use.</h1>'

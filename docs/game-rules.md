@@ -1,4 +1,4 @@
-# Orbital Courier rules
+# Kometfrakteratene rules
 
 You pilot a ship between Earth, Luna, Mars, Europa, and Titan. Complete delivery contracts to earn points.
 
