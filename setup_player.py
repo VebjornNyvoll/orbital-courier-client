@@ -14,8 +14,13 @@ def main():
     try:
         if CONFIG_PATH.exists():
             typer.confirm("Replace this checkout's saved player configuration?", abort=True)
-        url = typer.prompt("Server URL", default="http://localhost:8000")
+        url = typer.prompt(
+            "Server URL",
+            default=os.environ.get("ORBITAL_URL") or "https://orbital-courier.onrender.com",
+        )
         api = GameClient(url)
+        typer.echo("Checking the server. A sleeping free host can take up to two minutes to respond.")
+        api.wait_until_ready()
         existing = typer.confirm("Do you already have a participant token?", default=False)
         if existing:
             token = typer.prompt("Participant token", hide_input=True)

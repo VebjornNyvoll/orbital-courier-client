@@ -37,7 +37,7 @@ uv run python export_submission.py
 <li>Configuration precedence: <code>ORBITAL_URL</code> / <code>ORBITAL_TOKEN</code> environment variables, then <code>.player.json</code>. Environment variables override each field separately.</li>
 <li>No configuration? Run <code>setup_player.py</code>. Keep API calls inside command functions so help works without configuration.</li>
 <li>Connection failure? Check the URL with the instructor and open <code>&lt;server&gt;/health</code> in a browser. In a cloud VM, <code>localhost</code> means the VM itself. Use the instructor's public HTTPS URL; no incoming VM ports are needed.</li>
-<li>A free host may take about a minute to wake. Wait until <code>/health</code> returns <code>{"status":"ok"}</code>, then retry a status command. If registration failed after submission, ask for token recovery before registering again.</li>
+<li>Setup defaults to <code>https://orbital-courier.onrender.com</code> (or <code>ORBITAL_URL</code> if set). It checks <code>/health</code> and waits up to two minutes for a sleeping host before asking for registration details. If registration itself times out, ask the instructor to check your display name and recover your token before registering again.</li>
 <li>Cargo full? Deliver it or unload it. Capacity is six units across all items.</li>
 <li>Invalid token? Ask the instructor for recovery and rerun setup, selecting an existing token.</li>
 <li><code>--help</code> output is available offline. Shell completion is optional and shell-dependent.</li>

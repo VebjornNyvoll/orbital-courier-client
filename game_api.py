@@ -22,6 +22,7 @@ class GameError(Exception):
 
 
 def validate_url(url: str) -> str:
+    url = url.strip()
     parsed = urlparse(url)
     if (
         parsed.scheme not in {"http", "https"}
@@ -30,7 +31,8 @@ def validate_url(url: str) -> str:
         or parsed.password
     ):
         raise GameError(
-            "configuration", "Server URL must be an http(s) address without credentials."
+            "configuration", "Server URL must be an http(s) address without credentials.",
+            "Include https://, for example https://orbital-courier.onrender.com.",
         )
     if parsed.query or parsed.fragment:
         raise GameError("configuration", "Server URL cannot include a query or fragment.")
@@ -66,25 +68,39 @@ class GameClient:
             )
         return cls(url, token)
 
-    def _request(self, method, path, *, body=None, params=None):
+    def _request(self, method, path, *, body=None, params=None, timeout=5.0):
         headers = {"Authorization": f"Bearer {self.token}"} if self.token else {}
         if method == "POST" and path != "/api/join":
             headers["Idempotency-Key"] = str(uuid.uuid4())
         # A retry uses the same key. Joining is deliberately never retried automatically.
-        attempts = 1 if path == "/api/join" else 2
-        with httpx.Client(timeout=5.0, transport=self.transport, follow_redirects=False) as client:
+        attempts = 1 if path in {"/api/join", "/health"} else 2
+        with httpx.Client(timeout=timeout, transport=self.transport, follow_redirects=False) as client:
             for attempt in range(attempts):
                 try:
                     response = client.request(
                         method, self.base_url + path, json=body, params=params, headers=headers
                     )
                     break
-                except httpx.TransportError:
+                except httpx.TransportError as exc:
                     if attempt + 1 == attempts:
+                        hint = (
+                            "Check the full server URL and the VM's internet connection."
+                        )
+                        if path == "/api/join":
+                            hint += (
+                                " Registration may have reached the server. Ask the instructor"
+                                " to check your display name and recover your token before retrying."
+                            )
+                        elif path == "/health":
+                            hint += " No registration was submitted; you can rerun setup."
+                        else:
+                            hint += " Check status before repeating an action."
+                        timed_out = isinstance(exc, httpx.TimeoutException)
                         raise GameError(
-                            "connection",
-                            "Could not reach the game server.",
-                            "Check the server URL and network. Check status before repeating an action.",
+                            "timeout" if timed_out else "connection",
+                            "The game server did not respond in time."
+                            if timed_out else "Could not connect to the game server.",
+                            hint,
                         ) from None
         try:
             data = response.json()
@@ -119,7 +135,19 @@ class GameClient:
         return self._request("PUT", path, body=body)
 
     def join(self, name: str, join_code: str):
-        return self.post("/api/join", name=name, join_code=join_code)
+        return self._request(
+            "POST", "/api/join", body={"name": name, "join_code": join_code}, timeout=30.0
+        )
+
+    def wait_until_ready(self):
+        """Wake a sleeping host with a read-only request before submitting registration."""
+        data = self._request("GET", "/health", timeout=httpx.Timeout(120.0, connect=15.0))
+        if data.get("status") != "ok":
+            raise GameError(
+                "unavailable", "The game server is not ready.",
+                "No registration was submitted. Check the server URL or ask the instructor.",
+            )
+        return data
 
     def session(self):
         return self.get("/api/session")

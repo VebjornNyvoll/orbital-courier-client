@@ -30,9 +30,30 @@ def test_join_is_not_retried():
         raise httpx.ReadTimeout("response lost")
 
     api = GameClient("https://game.test", transport=httpx.MockTransport(handler))
-    with pytest.raises(GameError):
+    with pytest.raises(GameError) as error:
         api.join("Alex", "code")
     assert len(calls) == 1
+    assert calls[0].extensions["timeout"]["read"] == 30.0
+    assert error.value.code == "timeout"
+    assert "recover your token before retrying" in error.value.hint
+
+
+def test_readiness_allows_a_cold_start():
+    def handler(request):
+        assert request.method == "GET" and request.url.path == "/health"
+        assert request.extensions["timeout"]["read"] == 120.0
+        assert request.extensions["timeout"]["connect"] == 15.0
+        return httpx.Response(200, json={"status": "ok"})
+
+    api = GameClient("https://game.test", transport=httpx.MockTransport(handler))
+    assert api.wait_until_ready() == {"status": "ok"}
+
+
+def test_missing_scheme_explains_how_to_fix_url():
+    with pytest.raises(GameError) as error:
+        GameClient("orbital-courier.onrender.com")
+    assert error.value.code == "configuration"
+    assert "Include https://" in error.value.hint
 
 
 def test_api_failure_has_recovery_hint():
