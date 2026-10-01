@@ -6,6 +6,7 @@ code, message, and hint. Configuration lives beside this file, never in a submis
 
 import json
 import os
+import re
 import uuid
 from pathlib import Path
 from urllib.parse import quote, urlparse
@@ -19,6 +20,13 @@ class GameError(Exception):
     def __init__(self, code: str, message: str, hint: str = "", status: int = 0):
         self.code, self.message, self.hint, self.status = code, message, hint, status
         super().__init__(message)
+
+
+def connection_detail(exc: httpx.TransportError) -> str:
+    """Keep the useful network error without displaying credentials in proxy URLs."""
+    detail = re.sub(r"[a-zA-Z][a-zA-Z0-9+.-]*://\S+", "[URL]", str(exc))
+    detail = " ".join(detail.split())[:500]
+    return f"Connection detail: {type(exc).__name__}: {detail}"
 
 
 def validate_url(url: str) -> str:
@@ -95,6 +103,7 @@ class GameClient:
                             hint += " No registration was submitted; you can rerun setup."
                         else:
                             hint += " Check status before repeating an action."
+                        hint += "\n" + connection_detail(exc)
                         timed_out = isinstance(exc, httpx.TimeoutException)
                         raise GameError(
                             "timeout" if timed_out else "connection",

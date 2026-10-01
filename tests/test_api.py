@@ -56,6 +56,36 @@ def test_missing_scheme_explains_how_to_fix_url():
     assert "Include https://" in error.value.hint
 
 
+@pytest.mark.parametrize(
+    "detail",
+    [
+        "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer",
+        "[Errno -2] Name or service not known",
+        "[Errno 111] Connection refused",
+    ],
+)
+def test_connection_errors_preserve_diagnostic_detail(detail):
+    def handler(request):
+        raise httpx.ConnectError(detail)
+
+    api = GameClient("https://game.test", transport=httpx.MockTransport(handler))
+    with pytest.raises(GameError) as error:
+        api.wait_until_ready()
+    assert f"Connection detail: ConnectError: {detail}" in error.value.hint
+    assert "No registration was submitted" in error.value.hint
+
+
+def test_proxy_error_does_not_expose_url_credentials():
+    def handler(request):
+        raise httpx.ProxyError("Could not connect to http://user:private-password@proxy.test:8080")
+
+    api = GameClient("https://game.test", transport=httpx.MockTransport(handler))
+    with pytest.raises(GameError) as error:
+        api.wait_until_ready()
+    assert "ProxyError" in error.value.hint
+    assert "private-password" not in error.value.hint
+
+
 def test_api_failure_has_recovery_hint():
     def handler(request):
         return httpx.Response(
